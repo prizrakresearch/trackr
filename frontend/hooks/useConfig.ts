@@ -1,0 +1,1 @@
+// useConfig.ts content goes here
