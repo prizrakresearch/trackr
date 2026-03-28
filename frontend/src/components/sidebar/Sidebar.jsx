@@ -1,26 +1,31 @@
+
 import { cn } from "@/lib/utils"
 import { CompanyList } from "./CompanyList"
 import { SidebarFooter } from "./SidebarFooter"
+import { useSettingsContext } from "@/context/SettingsContext"
+import trackrDark from "@/assets/trackr_dark.png";
+import trackrLight from "@/assets/trackr_light.png";
 
 export function Sidebar({ open, companies, feedItems, profile, onManageEntities }) {
+  const { settings, systemTheme } = useSettingsContext();
+  // Determine effective theme: if system, use systemTheme
+  const effectiveTheme = settings.theme === "system" ? systemTheme : settings.theme;
+  const logo = effectiveTheme === "dark" ? trackrDark : trackrLight;
   return (
     <div
       className={cn(
-        "flex flex-col bg-[#141518] border-r border-white/10 flex-shrink-0 overflow-hidden transition-all duration-200",
+        "flex flex-col bg-background border-r border-white/10 flex-shrink-0 overflow-hidden transition-all duration-200",
         open ? "w-[210px]" : "w-0 opacity-0"
       )}
     >
       {/* Brand */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06] flex-shrink-0">
-        <div className="w-5 h-5 rounded-[5px] bg-[#378ADD] flex items-center justify-center flex-shrink-0">
-          <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3">
-            <circle cx="6" cy="6" r="4.5" stroke="white" strokeWidth="1.5" />
-            <circle cx="6" cy="6" r="1.5" fill="white" />
-          </svg>
-        </div>
-        <span className="text-[14px] font-medium text-foreground tracking-tight">
-          Track<span className="text-[#378ADD]">r</span>
-        </span>
+      <div className="flex items-center justify-center gap-2 px-4 py-3 border-b border-white/[0.06] flex-shrink-0">
+        <img
+          src={logo}
+          alt="Trackr logo"
+          className="w-18 h-5 object-contain"
+          draggable={false}
+        />
       </div>
 
       {/* Section label */}

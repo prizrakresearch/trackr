@@ -5,7 +5,7 @@ export function EntityItem({ company, count = 0, onRemove, removing = false }) {
   const subtitle = [company?.symbol, company?.exchange].filter(Boolean).join(" · ")
 
   return (
-    <div className="flex items-center gap-3 rounded-md border border-white/10 bg-[#141518] px-3 py-2.5">
+    <div className="flex items-center gap-3 rounded-md border border-white/10 bg-background px-3 py-2.5">
       <Avatar name={company.name} size="sm" shape="square" />
 
       <div className="min-w-0 flex-1">

@@ -21,7 +21,7 @@ export function Modal({ open, onClose, title, children, className }) {
     >
       <div
         className={cn(
-          "relative bg-[#141518] border border-white/10 rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col",
+          "relative bg-background border border-white/10 rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col",
           className
         )}
       >

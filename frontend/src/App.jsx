@@ -41,7 +41,7 @@ function AppShell({ profile, companiesHook }) {
   }, [settings.openMode, activeItemId, items, clearActiveItem])
 
   return (
-    <div className="h-screen w-full bg-[#0e0f11] text-foreground flex overflow-hidden">
+    <div className="h-screen w-full bg-background text-foreground flex overflow-hidden">
       <Sidebar
         open={settings.sidebarOpen}
         companies={companies}
@@ -50,7 +50,7 @@ function AppShell({ profile, companiesHook }) {
         onManageEntities={() => setManageOpen(true)}
       />
 
-      <div className="flex-1 min-w-0 flex flex-col bg-[#0e0f11]">
+      <div className="flex-1 min-w-0 flex flex-col bg-background">
         <FeedHeader
           companies={companies}
           itemCount={items.length}

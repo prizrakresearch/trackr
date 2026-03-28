@@ -17,7 +17,7 @@ export function FeedHeader({ companies, itemCount, onToggleSidebar, onOpenSettin
       : companies.find((c) => c.id === activeCompanyId)
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10 bg-[#141518] flex-shrink-0">
+    <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10 bg-background flex-shrink-0">
       {/* Left */}
       <div className="flex items-center gap-2">
         <button

@@ -4,10 +4,10 @@ import { useSettings } from "@/hooks/useSettings"
 const SettingsContext = createContext(null)
 
 export function SettingsProvider({ children }) {
-  const { settings, updateSettings } = useSettings()
+  const { settings, updateSettings, systemTheme } = useSettings()
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings }}>
+    <SettingsContext.Provider value={{ settings, updateSettings, systemTheme }}>
       {children}
     </SettingsContext.Provider>
   )

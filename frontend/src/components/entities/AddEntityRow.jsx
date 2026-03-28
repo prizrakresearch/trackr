@@ -32,7 +32,7 @@ export function AddEntityRow({ onAdd, adding = false, error = "" }) {
   const disabled = adding || !form.name.trim()
 
   return (
-    <div className="rounded-lg border border-white/10 bg-[#141518] p-3 space-y-2.5">
+    <div className="rounded-lg border border-white/10 bg-background p-3 space-y-2.5">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <input
           value={form.name}

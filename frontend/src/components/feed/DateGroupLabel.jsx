@@ -1,6 +1,6 @@
 export function DateGroupLabel({ label, count }) {
   return (
-    <div className="sticky top-0 z-10 flex items-center gap-2 px-3 py-1.5 bg-[#0e0f11] border-b border-white/[0.06]">
+    <div className="sticky top-0 z-10 flex items-center gap-2 px-3 py-1.5 bg-background border-b border-white/[0.06]">
       <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
         {label}
       </span>

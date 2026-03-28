@@ -24,9 +24,9 @@ export function Onboarding({
   stepLabels = ["Profile", "Companies", "Review"],
 }) {
   return (
-    <div className="min-h-screen bg-[#0e0f11] text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex min-h-screen w-full max-w-3xl items-center justify-center px-4 py-10">
-        <div className="w-full rounded-2xl border border-white/10 bg-[#141518] p-6 shadow-[0_20px_80px_rgba(0,0,0,0.35)]">
+        <div className="w-full rounded-2xl border border-white/10 bg-background p-6 shadow-[0_20px_80px_rgba(0,0,0,0.35)]">
           <StepDots
             currentStep={stepIndex}
             totalSteps={stepLabels.length}

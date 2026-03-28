@@ -2,10 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+
 :root {
-	--foreground: #f3f4f6;
+	--foreground: #18181b; /* dark text for light mode */
+	--background: #f3f4f6;
+}
+
+.dark {
+	--foreground: #f3f4f6; /* light text for dark mode */
+	--background: #18181b;
 }
 
 .text-foreground {
 	color: var(--foreground) !important;
+}
+
+.bg-background {
+	background-color: var(--background) !important;
 }
