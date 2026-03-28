@@ -1,1 +1,0 @@
-// DetailPanel.tsx content goes here

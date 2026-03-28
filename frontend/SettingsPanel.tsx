@@ -1,1 +1,0 @@
-// SettingsPanel.tsx content goes here
