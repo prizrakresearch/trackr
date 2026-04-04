@@ -19,6 +19,15 @@ function AppShell({ profile, companiesHook }) {
   const { activeCompanyId, typeFilter, search, activeItemId, clearActiveItem } = useApp()
 
   const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // Listen for sidebar settings button
+  useEffect(() => {
+    function handleOpenSettings() {
+      setSettingsOpen(true);
+    }
+    window.addEventListener("open-settings", handleOpenSettings);
+    return () => window.removeEventListener("open-settings", handleOpenSettings);
+  }, []);
   const [manageOpen, setManageOpen] = useState(false)
 
   const {

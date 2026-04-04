@@ -34,7 +34,7 @@ export function Settings({ open, onClose }) {
                 key={option.value}
                 onClick={() => updateSettings({ theme: option.value })}
                 className={cn(
-                  "h-8 w-full rounded-md border text-[16px] font-medium transition-colors",
+                  "h-8 w-full rounded-md border text-[12px] font-medium transition-colors",
                   settings.theme === option.value
                     ? "bg-[#1a3a5c] text-[#7bb8f0] border-[#1e4a78]"
                     : "border-white/10 text-muted-foreground hover:text-foreground"

@@ -1,7 +1,7 @@
 import { useApp } from "@/context/AppContext"
 import { CompanyItem } from "./CompanyItem"
 
-export function CompanyList({ companies, feedItems }) {
+export function CompanyList({ companies, feedItems, collapsed }) {
   const { activeCompanyId, setActiveCompanyId, setActiveItemId } = useApp()
 
   function getCount(companyId) {
@@ -23,6 +23,7 @@ export function CompanyList({ companies, feedItems }) {
             setActiveCompanyId(company.id)
             setActiveItemId(null)
           }}
+          collapsed={collapsed}
         />
       ))}
     </div>
