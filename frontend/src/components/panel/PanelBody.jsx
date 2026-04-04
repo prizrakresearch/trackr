@@ -44,7 +44,7 @@ export function PanelBody({ item, company }) {
         </div>
 
         {summary && (
-          <div className="rounded-md border border-white/10 bg-[#1c1e22]/70 p-3">
+          <div className="rounded-md border border-white/10 bg-black/[0.04] dark:bg-white/[0.04] p-3">
             <p className="text-[12px] text-foreground/90 leading-relaxed whitespace-pre-wrap">
               {summary}
             </p>
@@ -69,7 +69,7 @@ export function PanelBody({ item, company }) {
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full text-center rounded-md border border-white/10 bg-[#1c1e22] px-3 py-2 text-[12px] font-medium text-muted-foreground hover:text-foreground hover:border-[#378ADD] hover:bg-[#1a3a5c]/30 transition-colors"
+            className="w-full text-center rounded-md border border-white/10 bg-black/[0.04] dark:bg-white/[0.04] px-3 py-2 text-[12px] font-medium text-muted-foreground hover:text-foreground hover:border-[#378ADD] hover:bg-[#1a3a5c]/30 transition-colors"
           >
             Open source link
           </a>

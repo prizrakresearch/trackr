@@ -6,8 +6,9 @@ import { useApp } from "@/context/AppContext"
 import { useSettingsContext } from "@/context/SettingsContext"
 
 export function FeedHeader({ companies, itemCount, onToggleSidebar, onOpenSettings }) {
-  const { activeCompanyId, typeFilter, setTypeFilter, search, setSearch } = useApp()
+  const { activeCompanyId, activeItemId, typeFilter, setTypeFilter, search, setSearch } = useApp()
   const { settings, updateSettings } = useSettingsContext()
+  const detailActive = !!activeItemId
 
   const activeCompany =
     activeCompanyId === 0
@@ -43,7 +44,13 @@ export function FeedHeader({ companies, itemCount, onToggleSidebar, onOpenSettin
         </span>
       </div>
 
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw]">
+      <div
+        className={cn(
+          detailActive
+            ? "flex-1 min-w-0 mx-2"
+            : "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[35vw]"
+        )}
+      >
         <SearchBar
           value={search}
           onChange={setSearch}
@@ -58,8 +65,12 @@ export function FeedHeader({ companies, itemCount, onToggleSidebar, onOpenSettin
           value={settings.scope}
           onChange={(scope) => updateSettings({ scope })}
         />
-        <div className="w-px h-4 bg-white/10" />
-        <TagFilter value={typeFilter} onChange={setTypeFilter} />
+        {!detailActive && (
+          <>
+            <div className="w-px h-4 bg-white/10" />
+            <TagFilter value={typeFilter} onChange={setTypeFilter} />
+          </>
+        )}
       </div>
       {/* Settings button removed from here; now in sidebar */}
     </div>

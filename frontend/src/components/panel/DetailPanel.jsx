@@ -13,8 +13,8 @@ export function DetailPanel({ items, companies }) {
   return (
     <div
       className={cn(
-        "flex flex-col bg-[#141518] border-l border-white/10 flex-shrink-0 overflow-hidden transition-all duration-200",
-        open ? "w-[268px]" : "w-0 opacity-0"
+        "flex flex-col bg-background border-l border-white/10 flex-shrink-0 overflow-hidden transition-all duration-200",
+        open ? "w-[80vh]" : "w-0 opacity-0"
       )}
     >
       {item && (

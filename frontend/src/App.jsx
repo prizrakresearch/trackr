@@ -49,6 +49,24 @@ function AppShell({ profile, companiesHook }) {
     clearActiveItem()
   }, [settings.openMode, activeItemId, items, clearActiveItem])
 
+  useEffect(() => {
+    const username = (profile?.name?.trim() || "User").toLowerCase()
+
+    if (activeCompanyId === 0) {
+      document.title = `trackr - ${username}`
+      return
+    }
+
+    const activeCompany = companies.find((c) => c.id === activeCompanyId)
+    const shortName =
+      activeCompany?.symbol?.trim() ||
+      activeCompany?.shortName?.trim() ||
+      activeCompany?.name?.trim() ||
+      username
+
+    document.title = `trackr - ${shortName}`
+  }, [activeCompanyId, companies, profile?.name])
+
   return (
     <div className="h-screen w-full bg-background text-foreground flex overflow-hidden">
       <Sidebar
