@@ -1,29 +1,61 @@
-from feed import *
-from dedup import *
-from segregator import *
+from pathlib import Path
 
-master_articles = []
-
-# Extracting the feeds from the CSV file.
-feeds = fetch_feeds("feeds.csv")
-print(f"fetched feed count: {len(feeds)}")
+from dedup import dedup_articles
+from feed import fetch_feeds, fetch_items
+from segregator import segregate_articles_by_keywords
 
 
-for i in feeds:
-    articles = fetch_items(i)
-    print(f"Feed: {i} -> {len(articles)}")
-    master_articles.extend(articles)
+BASE_DIR = Path(__file__).resolve().parent
 
-print(f"master_articles count: {len(master_articles)}")
 
-unique_articles = dedup_articles(master_articles)
-print(f"unique_articles count: {len(unique_articles)}")
+def run_pipeline(keywords, feeds_file="feeds.csv", verbose=False):
+    feeds_path = BASE_DIR / feeds_file
+    master_articles = []
 
-keys = ["Apollo", "Indag", "Midas", "JK", "CEAT"]
-a=segregate_articles_by_keywords(unique_articles, keys)
-for i in keys:
-    print(f"{i} count: {len(a[i])}")
-    print(a[i])
+    feeds = fetch_feeds(str(feeds_path))
+    if verbose:
+        print(f"fetched feed count: {len(feeds)}")
+
+    for feed_url in feeds:
+        articles = fetch_items(feed_url)
+        if verbose:
+            print(f"Feed: {feed_url} -> {len(articles)}")
+        master_articles.extend(articles)
+
+    unique_articles = dedup_articles(master_articles)
+    grouped = segregate_articles_by_keywords(unique_articles, keywords)
+
+    return {
+        "feeds_count": len(feeds),
+        "master_count": len(master_articles),
+        "unique_count": len(unique_articles),
+        "grouped": grouped,
+    }
+
+
+def build_user_feed(keywords, feeds_file="feeds.csv", verbose=False):
+    result = run_pipeline(keywords=keywords, feeds_file=feeds_file, verbose=verbose)
+
+    merged = []
+    for keyword in keywords:
+        for article in result["grouped"].get(keyword, []):
+            enriched = dict(article)
+            enriched["matched_keyword"] = keyword
+            merged.append(enriched)
+
+    # Final dedup at user-feed level (article can match multiple keywords).
+    return dedup_articles(merged)
+
+
+if __name__ == "__main__":
+    keys = ["Apollo", "Indag", "Midas", "JK", "CEAT"]
+    pipeline_result = run_pipeline(keys, verbose=True)
+
+    print(f"master_articles count: {pipeline_result['master_count']}")
+    print(f"unique_articles count: {pipeline_result['unique_count']}")
+
+    for key in keys:
+        print(f"{key} count: {len(pipeline_result['grouped'].get(key, []))}")
 
 
 
