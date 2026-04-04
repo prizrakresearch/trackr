@@ -20,3 +20,31 @@
 .bg-background {
 	background-color: var(--background) !important;
 }
+
+/* In light mode, white alpha borders become invisible on pale backgrounds. */
+:root:not(.dark) [class*="border-white/"] {
+	border-color: rgba(24, 24, 27, 0.14) !important;
+}
+
+:root:not(.dark) [class*="divide-white/"] > :not([hidden]) ~ :not([hidden]) {
+	border-color: rgba(24, 24, 27, 0.12) !important;
+}
+
+/* Improve hover contrast in light mode for dark-theme utility classes. */
+:root:not(.dark) [class*="hover:bg-white/5"]:hover {
+	background-color: rgba(24, 24, 27, 0.06) !important;
+}
+
+:root:not(.dark) [class*="hover:bg-white/[0.03]"]:hover,
+:root:not(.dark) [class*="hover:bg-white/[0.02]"]:hover {
+	background-color: rgba(24, 24, 27, 0.05) !important;
+}
+
+:root:not(.dark) [class*="hover:bg-[#1a3a5c]/30"]:hover,
+:root:not(.dark) [class*="hover:bg-[#1a3a5c]"]:hover {
+	background-color: rgba(55, 138, 221, 0.14) !important;
+}
+
+:root:not(.dark) [class*="hover:border-[#378ADD]"]:hover {
+	border-color: rgba(55, 138, 221, 0.7) !important;
+}

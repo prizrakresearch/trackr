@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils"
 
 const options = [
   { value: "today", label: "Today" },
-  { value: "all", label: "All time" },
+  { value: "all", label: "Available" },
 ]
 
 export function ScopeToggle({ value, onChange }) {
@@ -17,7 +17,7 @@ export function ScopeToggle({ value, onChange }) {
             i === 0 && "border-r border-white/10",
             value === opt.value
               ? "bg-[#378ADD] text-white"
-              : "bg-transparent text-muted-foreground hover:text-foreground"
+              : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08]"
           )}
         >
           {opt.label}

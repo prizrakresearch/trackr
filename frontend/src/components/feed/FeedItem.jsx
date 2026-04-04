@@ -29,7 +29,7 @@ export function FeedItem({ item, company, active, density = "comfortable", onCli
         densityPadding[density],
         active
           ? "bg-white/5 border-l-2 border-l-[#378ADD]"
-          : "hover:bg-white/[0.03]"
+          : "hover:bg-black/[0.04] dark:hover:bg-white/[0.03]"
       )}
     >
       <div className="flex-1 min-w-0">
@@ -57,7 +57,7 @@ export function FeedItem({ item, company, active, density = "comfortable", onCli
 
       <button
         onClick={handleCopy}
-        className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5 p-1 rounded hover:bg-white/10 text-muted-foreground"
+        className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5 p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-muted-foreground"
       >
         {copied ? <Check size={12} /> : <Copy size={12} />}
       </button>

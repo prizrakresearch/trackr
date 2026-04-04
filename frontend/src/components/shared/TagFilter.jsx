@@ -25,7 +25,7 @@ export function TagFilter({ value, onChange }) {
             "px-2 py-1 text-[11px] rounded-full border transition-colors",
             value === tag.value
               ? activeStyles[tag.value]
-              : "border-white/10 text-muted-foreground hover:text-foreground"
+              : "border-white/10 text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08]"
           )}
         >
           {tag.label}

@@ -1,5 +1,3 @@
-import { Menu } from "lucide-react"
-import { Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ScopeToggle } from "@/components/shared/ScopeToggle"
 import { TagFilter } from "@/components/shared/TagFilter"
@@ -17,13 +15,13 @@ export function FeedHeader({ companies, itemCount, onToggleSidebar, onOpenSettin
       : companies.find((c) => c.id === activeCompanyId)
 
   return (
-    <div className="flex items-center gap-2 px-3 h-11 border-b border-white/10 bg-background flex-shrink-0">
+    <div className="relative flex items-center gap-2 px-3 h-11 border-b border-white/10 bg-background flex-shrink-0">
       {/* Left */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 z-10">
         <button
           onClick={onToggleSidebar}
           className={cn(
-            "w-9 h-7 flex items-center justify-center rounded-md transition-colors",
+            "w-9 h-7 flex items-center justify-center rounded-md transition-colors hover:bg-black/[0.05] dark:hover:bg-white/[0.08]",
             settings.sidebarOpen
               ? "text-foreground"
               : "text-muted-foreground hover:text-foreground"
@@ -45,18 +43,24 @@ export function FeedHeader({ companies, itemCount, onToggleSidebar, onOpenSettin
         </span>
       </div>
 
-      <div className="flex-1" />
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw]">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          className="w-full"
+          fullWidth
+        />
+      </div>
 
       {/* Right */}
-      <ScopeToggle
-        value={settings.scope}
-        onChange={(scope) => updateSettings({ scope })}
-      />
-      <div className="w-px h-4 bg-white/10" />
-      <TagFilter value={typeFilter} onChange={setTypeFilter} />
-      <div className="w-px h-4 bg-white/10" />
-      <SearchBar value={search} onChange={setSearch} />
-      <div className="w-px h-4 bg-white/10" />
+      <div className="ml-auto flex items-center gap-2 z-10">
+        <ScopeToggle
+          value={settings.scope}
+          onChange={(scope) => updateSettings({ scope })}
+        />
+        <div className="w-px h-4 bg-white/10" />
+        <TagFilter value={typeFilter} onChange={setTypeFilter} />
+      </div>
       {/* Settings button removed from here; now in sidebar */}
     </div>
   )
