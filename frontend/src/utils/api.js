@@ -1,4 +1,5 @@
-const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000"
+const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:9696"
+const DEFAULT_USER_ID = import.meta.env.VITE_USER_ID ?? "u1"
 
 async function request(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, {
@@ -14,28 +15,47 @@ async function request(path, options = {}) {
 
 // ── Feed ──────────────────────────────────────────────────────────────────────
 
+function mapBackendItemToFeedItem(item = {}) {
+  const url = item.link ?? item.url ?? ""
+  const published = item.published ?? item.published_at ?? new Date().toISOString()
 
-// Mocked getFeed for offline development
-export function getFeed(params = {}) {
-  // Optionally, you can filter by params, but for now return all
-  const key = "trackr_mock_feed";
+  return {
+    id: item.id ?? url ?? crypto.randomUUID(),
+    company_id: item.company_id ?? null,
+    matched_keyword: item.matched_keyword ?? null,
+    title: item.title ?? "Untitled",
+    summary: item.summary ?? "",
+    content: item.summary ?? "",
+    source: item.source ?? "Unknown Source",
+    type: item.type ?? "news",
+    url,
+    link: url,
+    published,
+    published_at: published,
+  }
+}
+
+function getPersistedUserId() {
   try {
-    const feed = JSON.parse(localStorage.getItem(key));
-    if (Array.isArray(feed)) {
-      return Promise.resolve(feed);
-    }
-  } catch {}
-  // Fallback: static mock data
-  return Promise.resolve([
-    {
-      id: "1",
-      company_id: "mock1",
-      title: "Welcome to Trackr!",
-      type: "info",
-      date: new Date().toISOString(),
-      content: "This is a mock feed item. Your real feed will appear here when the backend is connected.",
-    },
-  ]);
+    const value = localStorage.getItem("trackr_user_id")
+    if (value && value.trim()) return value.trim()
+  } catch {
+    // Ignore storage read errors and fall back to defaults.
+  }
+  return DEFAULT_USER_ID
+}
+
+export async function getFeed(params = {}) {
+  const query = new URLSearchParams()
+  query.set("user_id", params.user_id ?? getPersistedUserId())
+  query.set("limit", String(params.limit ?? 100))
+  query.set("offset", String(params.offset ?? 0))
+
+  if (params.search) query.set("search", params.search)
+
+  const response = await request(`/api/feed?${query.toString()}`)
+  const items = Array.isArray(response?.items) ? response.items : []
+  return items.map(mapBackendItemToFeedItem)
 }
 
 // ── Companies ─────────────────────────────────────────────────────────────────

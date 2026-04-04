@@ -8,10 +8,21 @@ import { FeedEmpty } from "./FeedEmpty"
 export function Feed({ items, companies, loading }) {
   const { activeCompanyId, activeItemId, setActiveItemId, typeFilter, search } = useApp()
   const { settings } = useSettingsContext()
+  const selectedCompany = companies.find((company) => company.id === activeCompanyId)
+
+  function keywordMatchesSelectedCompany(item) {
+    if (!selectedCompany || !item?.matched_keyword) return false
+    const companyName = String(selectedCompany.name ?? "").toLowerCase()
+    const keyword = String(item.matched_keyword).toLowerCase()
+    return companyName.includes(keyword)
+  }
 
   // Filter
   const filtered = items.filter((item) => {
-    const matchCompany = activeCompanyId === 0 || item.company_id === activeCompanyId
+    const matchCompany =
+      activeCompanyId === 0 ||
+      item.company_id === activeCompanyId ||
+      keywordMatchesSelectedCompany(item)
     const matchType = typeFilter === "all" || item.type === typeFilter
     const matchSearch =
       !search ||
@@ -40,7 +51,14 @@ export function Feed({ items, companies, loading }) {
         <div key={group.label}>
           <DateGroupLabel label={group.label} count={group.items.length} />
           {group.items.map((item) => {
-            const company = companies.find((c) => c.id === item.company_id)
+            const company =
+              companies.find((c) => c.id === item.company_id) ||
+              companies.find((c) => {
+                if (!item?.matched_keyword) return false
+                return String(c.name ?? "")
+                  .toLowerCase()
+                  .includes(String(item.matched_keyword).toLowerCase())
+              })
             return (
               <FeedItem
                 key={item.id}

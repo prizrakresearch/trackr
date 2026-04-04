@@ -53,7 +53,13 @@ function AppShell({ profile, companiesHook }) {
 
   const activeItem = items.find((item) => item.id === activeItemId)
   const activeItemCompany = activeItem
-    ? companies.find((c) => c.id === activeItem.company_id)
+    ? companies.find((c) => c.id === activeItem.company_id) ||
+      companies.find((c) => {
+        if (!activeItem?.matched_keyword) return false
+        return String(c.name ?? "")
+          .toLowerCase()
+          .includes(String(activeItem.matched_keyword).toLowerCase())
+      })
     : null
 
   useEffect(() => {
