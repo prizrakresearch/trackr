@@ -40,10 +40,7 @@ export function Feed({ items, companies, loading }) {
         <div key={group.label}>
           <DateGroupLabel label={group.label} count={group.items.length} />
           {group.items.map((item) => {
-            const company =
-              activeCompanyId === 0
-                ? companies.find((c) => c.id === item.company_id)
-                : null
+            const company = companies.find((c) => c.id === item.company_id)
             return (
               <FeedItem
                 key={item.id}
