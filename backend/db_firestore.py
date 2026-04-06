@@ -1,4 +1,5 @@
 import csv
+import io
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -10,6 +11,99 @@ from google.cloud import firestore
 
 BASE_DIR = Path(__file__).resolve().parent
 _FIRESTORE_CLIENT: firestore.Client | None = None
+
+# Default feed sources (pinned so new users get consistent feeds regardless of container age)
+DEFAULT_FEEDS_CSV = """feed_url,category
+https://auto.economictimes.indiatimes.com/rss/topstories,news
+https://auto.economictimes.indiatimes.com/rss/recentstories,news
+https://auto.economictimes.indiatimes.com/rss/auto-technology,news
+https://auto.economictimes.indiatimes.com/rss/passenger-vehicle,news
+https://auto.economictimes.indiatimes.com/rss/passenger-vehicle/uv,news
+https://auto.economictimes.indiatimes.com/rss/passenger-vehicle/cars,news
+https://auto.economictimes.indiatimes.com/rss/two-wheelers,news
+https://auto.economictimes.indiatimes.com/rss/auto-components,news
+https://auto.economictimes.indiatimes.com/rss/latest-stories,news
+https://auto.economictimes.indiatimes.com/rss/tyres,news
+https://auto.economictimes.indiatimes.com/rss/industry,news
+https://auto.economictimes.indiatimes.com/rss/oil-and-lubes,news
+https://auto.economictimes.indiatimes.com/rss/commercial-vehicle,news
+https://auto.economictimes.indiatimes.com/rss/commercial-vehicle/mhcv,news
+https://auto.economictimes.indiatimes.com/rss/commercial-vehicle/lcv,news
+https://auto.economictimes.indiatimes.com/rss/aftermarket,news
+https://auto.economictimes.indiatimes.com/rss/auto-finance,news
+https://auto.economictimes.indiatimes.com/rss/automotive,news
+https://auto.economictimes.indiatimes.com/rss/automotive/off-highway,news
+https://auto.economictimes.indiatimes.com/rss/automotive/construction-equipment,news
+https://auto.economictimes.indiatimes.com/rss/automotive/farm-equipment,news
+https://auto.economictimes.indiatimes.com/rss/raw-material,news
+https://www.automotive-iq.com/rss/articles,news
+https://www.automotive-iq.com/rss/case-studies,news
+https://www.automotive-iq.com/rss/news,news
+https://www.automotive-iq.com/rss/reports,news
+https://www.automotive-iq.com/rss/webinars,news
+https://www.autocarpro.in/rssfeeds/all,news
+https://auto.hindustantimes.com/rss/trending,news
+https://auto.hindustantimes.com/rss/latest-news,news
+https://auto.hindustantimes.com/rss/auto,news
+https://automotive.einnews.com/all_rss#,news
+https://www.tyremarket.com/tyremantra/rss,news
+https://nsearchives.nseindia.com/content/RSS/Online_announcements.xml,press
+https://nsearchives.nseindia.com/content/RSS/Annual_Reports.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Board_Meetings.xml,filing
+https://nsearchives.nseindia.com/content/RSS/brsr.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Corporate_action.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Corporate_Governance.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Daily_Buyback.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Financial_Results.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Insider_Trading.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Investor_Complaints.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Offer_Documents.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Related_Party_Trans.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Sast_Regulation29.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Sast_Regulation31.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Sast_ReasonForEncumbrance.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Secretarial_Compliance.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Share_Transfers.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Shareholding_Pattern.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Statement_Of_Deviation.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Unitholding_Patterns.xml,filing
+https://nsearchives.nseindia.com/content/RSS/Voting_Results.xml,filing
+https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=APOLLOTYRES&type=10&dateb=&owner=exclude&count=40&search_text=,filing
+https://feeds.finance.yahoo.com/rss/2.0/headline?s=APOLLOTYRES,news
+https://seekingalpha.com/api/v3/newsfeed?symbols=APOLLOTYRES&until=0,news
+https://feeds.marketwatch.com/marketwatch/daily/apollotyres,news
+https://news.google.com/rss/search?q=Apollo%20Tyres&hl=en-US&gl=US&ceid=US:en,news
+https://www.reuters.com/finance/stocks/APOLLOTYRES/news,news
+https://stocktwits.com/api/feeds/APOLLOTYRES,news
+https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=INDAGINGROUP&type=10&dateb=&owner=exclude&count=40&search_text=,filing
+https://feeds.finance.yahoo.com/rss/2.0/headline?s=INDAGINGROUP,news
+https://seekingalpha.com/api/v3/newsfeed?symbols=INDAGINGROUP&until=0,news
+https://feeds.marketwatch.com/marketwatch/daily/indagingroup,news
+https://news.google.com/rss/search?q=Indag&hl=en-US&gl=US&ceid=US:en,news
+https://www.reuters.com/finance/stocks/INDAGINGROUP/news,news
+https://stocktwits.com/api/feeds/INDAGINGROUP,news
+https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=CEAT&type=10&dateb=&owner=exclude&count=40&search_text=,filing
+https://feeds.finance.yahoo.com/rss/2.0/headline?s=CEAT,news
+https://seekingalpha.com/api/v3/newsfeed?symbols=CEAT&until=0,news
+https://feeds.marketwatch.com/marketwatch/daily/ceat,news
+https://news.google.com/rss/search?q=CEAT&hl=en-US&gl=US&ceid=US:en,news
+https://www.reuters.com/finance/stocks/CEAT/news,news
+https://stocktwits.com/api/feeds/CEAT,news
+https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=JKTYRE&type=10&dateb=&owner=exclude&count=40&search_text=,filing
+https://feeds.finance.yahoo.com/rss/2.0/headline?s=JKTYRE,news
+https://seekingalpha.com/api/v3/newsfeed?symbols=JKTYRE&until=0,news
+https://feeds.marketwatch.com/marketwatch/daily/jktyre,news
+https://news.google.com/rss/search?q=JK%20Tyre&hl=en-US&gl=US&ceid=US:en,news
+https://www.reuters.com/finance/stocks/JKTYRE/news,news
+https://stocktwits.com/api/feeds/JKTYRE,news
+https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=MIDASTOUCH&type=10&dateb=&owner=exclude&count=40&search_text=,filing
+https://feeds.finance.yahoo.com/rss/2.0/headline?s=MIDASTOUCH,news
+https://seekingalpha.com/api/v3/newsfeed?symbols=MIDASTOUCH&until=0,news
+https://feeds.marketwatch.com/marketwatch/daily/midastouch,news
+https://news.google.com/rss/search?q=Midas&hl=en-US&gl=US&ceid=US:en,news
+https://www.reuters.com/finance/stocks/MIDASTOUCH/news,news
+https://stocktwits.com/api/feeds/MIDASTOUCH,news
+"""
 
 
 def _client() -> firestore.Client:
@@ -98,17 +192,17 @@ def _normalize_feed_sources(sources: list[dict]) -> list[dict]:
 
 
 def _load_default_feed_sources() -> list[dict]:
-    feeds_path = BASE_DIR / "feeds.csv"
-    if not feeds_path.exists():
-        return []
-
+    # Parse hardcoded defaults (ensures new users always get consistent feeds)
+    lines = DEFAULT_FEEDS_CSV.strip().split("\n")
+    reader = csv.DictReader(io.StringIO("\n".join(lines)))
     rows = []
-    with feeds_path.open(newline="", encoding="utf-8") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            feed_url = str(row.get("feed_url") or "").strip()
-            if feed_url:
-                rows.append({"url": feed_url})
+    for row in reader:
+        feed_url = str(row.get("feed_url") or "").strip()
+        if feed_url:
+            rows.append({
+                "url": feed_url,
+                "category": row.get("category", "news").strip()
+            })
 
     return _normalize_feed_sources(rows)
 
