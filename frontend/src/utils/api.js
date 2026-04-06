@@ -159,10 +159,16 @@ function getPersistedUserId() {
       localStorage.setItem("trackr_user_id", profileUserId)
       return profileUserId
     }
+
+    localStorage.setItem("trackr_user_id", DEFAULT_USER_ID)
   } catch {
     // Ignore storage read errors and fall back to defaults.
   }
   return DEFAULT_USER_ID
+}
+
+export function ensurePersistedUserId() {
+  return getPersistedUserId()
 }
 
 export async function getFeed(params = {}) {

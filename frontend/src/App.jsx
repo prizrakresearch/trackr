@@ -4,7 +4,7 @@ import { SettingsProvider, useSettingsContext } from "@/context/SettingsContext"
 import { useCompanies } from "@/hooks/useCompanies"
 import { useFeed } from "@/hooks/useFeed"
 import { useProfile, normalizeProfile } from "@/hooks/userProfile"
-import { getCompanies, addCompany, removeCompany } from "@/utils/api"
+import { ensurePersistedUserId, getCompanies, addCompany, removeCompany } from "@/utils/api"
 import { Sidebar } from "@/components/sidebar/Sidebar"
 import { FeedHeader } from "@/components/feed/FeedHeader"
 import { Feed } from "@/components/feed/Feed"
@@ -318,6 +318,10 @@ function App() {
   const { hasCompletedOnboarding, completeOnboarding: markOnboardingComplete, updateProfile, profile } = useProfile();
   const companiesHook = useCompanies();
   const PROFILE_STORAGE_KEY = "trackr_profile";
+
+  useEffect(() => {
+    ensurePersistedUserId()
+  }, [])
 
   if (!hasCompletedOnboarding) {
     // Onboarding state (local, not from hooks)
