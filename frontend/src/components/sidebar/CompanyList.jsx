@@ -43,7 +43,7 @@ export function CompanyList({ companies, feedItems, collapsed }) {
     if (!keyword) return false
 
     const tokens = getCompanyTokens(company)
-    return tokens.includes(keyword)
+    return tokens.some((token) => token === keyword || token.includes(keyword) || keyword.includes(token))
   }
 
   function itemMatchesSharedFilters(item) {

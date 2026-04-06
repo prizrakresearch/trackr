@@ -45,7 +45,7 @@ export function Feed({ items, companies, loading }) {
     if (!selectedCompany || !item?.matched_keyword) return false
     const keyword = normalizeText(item.matched_keyword)
     const tokens = getCompanyTokens(selectedCompany)
-    return tokens.includes(keyword)
+    return tokens.some((token) => token === keyword || token.includes(keyword) || keyword.includes(token))
   }
 
   // Filter
@@ -85,7 +85,7 @@ export function Feed({ items, companies, loading }) {
             if (!item?.matched_keyword) return false
             const keyword = normalizeText(item.matched_keyword)
             const tokens = getCompanyTokens(c)
-            return tokens.includes(keyword)
+            return tokens.some((token) => token === keyword || token.includes(keyword) || keyword.includes(token))
           })
         return (
           <FeedItem
