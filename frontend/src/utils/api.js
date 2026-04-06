@@ -108,11 +108,20 @@ function getPersistedUserId() {
     return cleaned.toLowerCase().replace(/\s+/g, "_")
   }
 
-  function fromTrackrProfile() {
+  function getTrackrProfile() {
     try {
       const raw = localStorage.getItem("trackr_profile")
-      if (!raw) return ""
+      if (!raw) return null
       const profile = JSON.parse(raw)
+      if (!profile || typeof profile !== "object") return null
+      return profile
+    } catch {
+      return null
+    }
+  }
+
+  function fromTrackrProfile(profile) {
+    try {
       if (!profile || typeof profile !== "object") return ""
 
       const directId =
@@ -127,9 +136,6 @@ function getPersistedUserId() {
       const emailCandidate = normalizeCandidate(profile.email)
       if (emailCandidate) return emailCandidate
 
-      const nameCandidate = normalizeCandidate(profile.name ?? profile.username ?? profile.displayName)
-      if (nameCandidate) return `profile_${nameCandidate}`
-
       return ""
     } catch {
       return ""
@@ -137,10 +143,18 @@ function getPersistedUserId() {
   }
 
   try {
+    const profile = getTrackrProfile()
+    const profileUserId = fromTrackrProfile(profile)
     const value = localStorage.getItem("trackr_user_id")
-    if (value && value.trim()) return value.trim()
+    if (value && value.trim()) {
+      const existing = value.trim()
+      if (existing.startsWith("profile_") && !profileUserId) {
+        localStorage.setItem("trackr_user_id", DEFAULT_USER_ID)
+        return DEFAULT_USER_ID
+      }
+      return existing
+    }
 
-    const profileUserId = fromTrackrProfile()
     if (profileUserId) {
       localStorage.setItem("trackr_user_id", profileUserId)
       return profileUserId
