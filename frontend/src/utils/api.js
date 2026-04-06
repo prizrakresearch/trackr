@@ -102,9 +102,49 @@ function mapBackendItemToFeedItem(item = {}) {
 }
 
 function getPersistedUserId() {
+  function normalizeCandidate(value) {
+    const cleaned = String(value || "").trim()
+    if (!cleaned) return ""
+    return cleaned.toLowerCase().replace(/\s+/g, "_")
+  }
+
+  function fromTrackrProfile() {
+    try {
+      const raw = localStorage.getItem("trackr_profile")
+      if (!raw) return ""
+      const profile = JSON.parse(raw)
+      if (!profile || typeof profile !== "object") return ""
+
+      const directId =
+        profile.user_id ??
+        profile.userId ??
+        profile.id ??
+        profile.sub ??
+        profile.uid
+      const directCandidate = normalizeCandidate(directId)
+      if (directCandidate) return directCandidate
+
+      const emailCandidate = normalizeCandidate(profile.email)
+      if (emailCandidate) return emailCandidate
+
+      const nameCandidate = normalizeCandidate(profile.name ?? profile.username ?? profile.displayName)
+      if (nameCandidate) return `profile_${nameCandidate}`
+
+      return ""
+    } catch {
+      return ""
+    }
+  }
+
   try {
     const value = localStorage.getItem("trackr_user_id")
     if (value && value.trim()) return value.trim()
+
+    const profileUserId = fromTrackrProfile()
+    if (profileUserId) {
+      localStorage.setItem("trackr_user_id", profileUserId)
+      return profileUserId
+    }
   } catch {
     // Ignore storage read errors and fall back to defaults.
   }
