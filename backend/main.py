@@ -1,5 +1,6 @@
 import csv
 import io
+import os
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -95,16 +96,22 @@ class ArticleReadResponse(BaseModel):
 
 app = FastAPI(title="Trackr Backend", version="0.1.0")
 
+default_origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+]
+env_origins = [item.strip() for item in os.getenv("CORS_ORIGINS", "").split(",") if item.strip()]
+allowed_origins = env_origins or default_origins
+allowed_origin_regex = os.getenv("CORS_ORIGIN_REGEX", "").strip() or None
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-    ],
+    allow_origins=allowed_origins,
+    allow_origin_regex=allowed_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

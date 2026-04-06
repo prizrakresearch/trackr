@@ -2,7 +2,10 @@ import { Trash2 } from "lucide-react"
 import { Avatar } from "@/components/shared/Avatar"
 
 export function EntityItem({ company, count = 0, onRemove, removing = false }) {
-  const subtitle = [company?.symbol, company?.exchange].filter(Boolean).join(" · ")
+  const keywordPreview = Array.isArray(company?.keywords)
+    ? company.keywords.slice(0, 3).join(", ")
+    : ""
+  const subtitle = [company?.symbol, keywordPreview].filter(Boolean).join(" · ")
 
   return (
     <div className="flex items-center gap-3 rounded-md border border-white/10 bg-background px-3 py-2.5">

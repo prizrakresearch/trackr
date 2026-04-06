@@ -4,7 +4,14 @@ import { Plus, Loader2 } from "lucide-react"
 const INITIAL_FORM = {
   name: "",
   symbol: "",
-  exchange: "",
+  keywords: "",
+}
+
+function parseKeywords(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
 }
 
 export function AddEntityRow({ onAdd, adding = false, error = "" }) {
@@ -20,7 +27,7 @@ export function AddEntityRow({ onAdd, adding = false, error = "" }) {
     const payload = {
       name: form.name.trim(),
       symbol: form.symbol.trim() || undefined,
-      exchange: form.exchange.trim() || undefined,
+      keywords: parseKeywords(form.keywords),
     }
 
     if (!payload.name || !onAdd) return
@@ -47,9 +54,9 @@ export function AddEntityRow({ onAdd, adding = false, error = "" }) {
           className="h-9 rounded-md border border-white/10 bg-white/[0.02] px-3 text-[12px] text-foreground placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
         />
         <input
-          value={form.exchange}
-          onChange={(e) => updateField("exchange", e.target.value.toUpperCase())}
-          placeholder="Exchange"
+          value={form.keywords}
+          onChange={(e) => updateField("keywords", e.target.value)}
+          placeholder="Search keywords (comma separated)"
           className="h-9 rounded-md border border-white/10 bg-white/[0.02] px-3 text-[12px] text-foreground placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
         />
       </div>

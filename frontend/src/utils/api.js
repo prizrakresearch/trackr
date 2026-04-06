@@ -154,22 +154,70 @@ export async function exportFeedSources(userId = getPersistedUserId()) {
   return requestBlob(`/api/feed-sources/export?${query.toString()}`)
 }
 
+// ── Watchlist ────────────────────────────────────────────────────────────────
+
+function buildWatchlistKeywordsFromCompanies(companies = []) {
+  const seen = new Set()
+  const keywords = []
+
+  for (const company of companies) {
+    const extraKeywords = Array.isArray(company?.keywords)
+      ? company.keywords
+      : String(company?.keywords || "")
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+
+    const candidates = [company?.name, company?.symbol, ...extraKeywords]
+    for (const value of candidates) {
+      const cleaned = String(value || "").trim()
+      if (!cleaned) continue
+      const marker = cleaned.toLowerCase()
+      if (seen.has(marker)) continue
+      seen.add(marker)
+      keywords.push(cleaned)
+    }
+  }
+
+  return keywords
+}
+
+export async function saveWatchlistKeywords(keywords, userId = getPersistedUserId()) {
+  return request("/api/watchlist", {
+    method: "POST",
+    body: JSON.stringify({
+      user_id: userId,
+      keywords,
+    }),
+  })
+}
+
+async function syncWatchlistFromCompanies(companies = [], userId = getPersistedUserId()) {
+  const keywords = buildWatchlistKeywordsFromCompanies(companies)
+  await saveWatchlistKeywords(keywords, userId)
+}
+
 // ── Companies ─────────────────────────────────────────────────────────────────
 
 
 // Mocked getCompanies for offline development
 export function getCompanies() {
   const key = "trackr_mock_companies";
+  let companies = [];
   try {
-    return Promise.resolve(JSON.parse(localStorage.getItem(key)) || []);
+    companies = JSON.parse(localStorage.getItem(key)) || [];
   } catch {
-    return Promise.resolve([]);
+    companies = [];
   }
+
+  // Keep backend keyword scan list aligned to company name + ticker.
+  syncWatchlistFromCompanies(companies).catch(() => {})
+  return Promise.resolve(companies)
 }
 
 
 // Mocked addCompany for offline development
-export function addCompany(company) {
+export async function addCompany(company) {
   const key = "trackr_mock_companies";
   let companies = [];
   try {
@@ -179,12 +227,19 @@ export function addCompany(company) {
   const created = { ...company, id };
   companies.push(created);
   localStorage.setItem(key, JSON.stringify(companies));
-  return Promise.resolve(created);
+
+  try {
+    await syncWatchlistFromCompanies(companies)
+  } catch {
+    // Keep local add successful even if backend sync is temporarily unavailable.
+  }
+
+  return created
 }
 
 
 // Mocked removeCompany for offline development
-export function removeCompany(id) {
+export async function removeCompany(id) {
   const key = "trackr_mock_companies";
   let companies = [];
   try {
@@ -192,7 +247,12 @@ export function removeCompany(id) {
   } catch {}
   companies = companies.filter((c) => c.id !== id);
   localStorage.setItem(key, JSON.stringify(companies));
-  return Promise.resolve();
+
+  try {
+    await syncWatchlistFromCompanies(companies)
+  } catch {
+    // Keep local remove successful even if backend sync is temporarily unavailable.
+  }
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────

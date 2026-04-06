@@ -1,53 +1,31 @@
-import json
-import os
-import sqlite3
+import csv
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List
 from urllib.parse import urlparse
 
-import csv
+from google.cloud import firestore
+
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "trackr.db"
+_FIRESTORE_CLIENT: firestore.Client | None = None
 
 
-def _get_conn():
-    return sqlite3.connect(DB_PATH)
+def _client() -> firestore.Client:
+    global _FIRESTORE_CLIENT
+    if _FIRESTORE_CLIENT is None:
+        _FIRESTORE_CLIENT = firestore.Client()
+    return _FIRESTORE_CLIENT
+
+
+def _user_doc(user_id: str):
+    return _client().collection("users").document(user_id)
 
 
 def init_db() -> None:
-    with _get_conn() as conn:
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS user_watchlist (
-                user_id TEXT PRIMARY KEY,
-                keywords_json TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            )
-            """
-        )
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS user_feed_cache (
-                user_id TEXT PRIMARY KEY,
-                payload_json TEXT NOT NULL,
-                keywords_json TEXT NOT NULL,
-                cached_at TEXT NOT NULL
-            )
-            """
-        )
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS user_feed_sources (
-                user_id TEXT PRIMARY KEY,
-                sources_json TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            )
-            """
-        )
-        conn.commit()
+    # Firestore is schemaless; this call only ensures credentials are valid.
+    _client()
 
 
 def _normalize_keywords(keywords: List[str]) -> List[str]:
@@ -137,80 +115,62 @@ def _load_default_feed_sources() -> list[dict]:
 
 def save_watchlist(user_id: str, keywords: List[str]) -> List[str]:
     normalized = _normalize_keywords(keywords)
-    payload = json.dumps(normalized)
     now = datetime.now(timezone.utc).isoformat()
 
-    with _get_conn() as conn:
-        conn.execute(
-            """
-            INSERT INTO user_watchlist (user_id, keywords_json, updated_at)
-            VALUES (?, ?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET
-                keywords_json=excluded.keywords_json,
-                updated_at=excluded.updated_at
-            """,
-            (user_id, payload, now),
-        )
-        conn.commit()
+    _user_doc(user_id).set(
+        {
+            "watchlist": {
+                "keywords": normalized,
+                "updated_at": now,
+            }
+        },
+        merge=True,
+    )
 
     invalidate_feed_cache(user_id)
     return normalized
 
 
 def get_watchlist(user_id: str) -> List[str]:
-    with _get_conn() as conn:
-        row = conn.execute(
-            "SELECT keywords_json FROM user_watchlist WHERE user_id = ?",
-            (user_id,),
-        ).fetchone()
-
-    if not row:
+    snapshot = _user_doc(user_id).get()
+    if not snapshot.exists:
         return []
 
-    try:
-        data = json.loads(row[0])
-        if isinstance(data, list):
-            return [str(item) for item in data]
-    except json.JSONDecodeError:
-        return []
-
+    data = snapshot.to_dict() or {}
+    watchlist = data.get("watchlist") or {}
+    keywords = watchlist.get("keywords")
+    if isinstance(keywords, list):
+        return [str(item) for item in keywords]
     return []
 
 
 def get_feed_sources(user_id: str) -> list[dict]:
-    with _get_conn() as conn:
-        row = conn.execute(
-            "SELECT sources_json FROM user_feed_sources WHERE user_id = ?",
-            (user_id,),
-        ).fetchone()
-
-    if not row:
+    snapshot = _user_doc(user_id).get()
+    if not snapshot.exists:
         return _load_default_feed_sources()
 
-    try:
-        data = json.loads(row[0])
-    except json.JSONDecodeError:
+    data = snapshot.to_dict() or {}
+    payload = data.get("feed_sources") or {}
+    sources = payload.get("sources")
+    if not isinstance(sources, list):
         return _load_default_feed_sources()
 
-    return _normalize_feed_sources(data if isinstance(data, list) else [])
+    return _normalize_feed_sources(sources)
 
 
 def save_feed_sources(user_id: str, sources: list[dict]) -> list[dict]:
     normalized = _normalize_feed_sources(sources)
     now = datetime.now(timezone.utc).isoformat()
 
-    with _get_conn() as conn:
-        conn.execute(
-            """
-            INSERT INTO user_feed_sources (user_id, sources_json, updated_at)
-            VALUES (?, ?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET
-                sources_json=excluded.sources_json,
-                updated_at=excluded.updated_at
-            """,
-            (user_id, json.dumps(normalized), now),
-        )
-        conn.commit()
+    _user_doc(user_id).set(
+        {
+            "feed_sources": {
+                "sources": normalized,
+                "updated_at": now,
+            }
+        },
+        merge=True,
+    )
 
     invalidate_feed_cache(user_id)
     return normalized
@@ -286,49 +246,47 @@ def delete_feed_source(user_id: str, source_id: str) -> list[dict]:
 
 
 def invalidate_feed_cache(user_id: str) -> None:
-    with _get_conn() as conn:
-        conn.execute("DELETE FROM user_feed_cache WHERE user_id = ?", (user_id,))
-        conn.commit()
+    _user_doc(user_id).set({"feed_cache": firestore.DELETE_FIELD}, merge=True)
 
 
 def save_feed_cache(user_id: str, keywords: List[str], payload: dict) -> None:
     cached_at = datetime.now(timezone.utc).isoformat()
-    with _get_conn() as conn:
-        conn.execute(
-            """
-            INSERT INTO user_feed_cache (user_id, payload_json, keywords_json, cached_at)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(user_id) DO UPDATE SET
-                payload_json=excluded.payload_json,
-                keywords_json=excluded.keywords_json,
-                cached_at=excluded.cached_at
-            """,
-            (
-                user_id,
-                json.dumps(payload),
-                json.dumps(_normalize_keywords(keywords)),
-                cached_at,
-            ),
-        )
-        conn.commit()
+    _user_doc(user_id).set(
+        {
+            "feed_cache": {
+                "payload": payload,
+                "keywords": _normalize_keywords(keywords),
+                "cached_at": cached_at,
+            }
+        },
+        merge=True,
+    )
 
 
 def get_feed_cache(user_id: str) -> dict | None:
-    with _get_conn() as conn:
-        row = conn.execute(
-            "SELECT payload_json, keywords_json, cached_at FROM user_feed_cache WHERE user_id = ?",
-            (user_id,),
-        ).fetchone()
-
-    if not row:
+    snapshot = _user_doc(user_id).get()
+    if not snapshot.exists:
         return None
 
-    payload_json, keywords_json, cached_at = row
+    data = snapshot.to_dict() or {}
+    feed_cache = data.get("feed_cache")
+    if not isinstance(feed_cache, dict):
+        return None
+
+    payload = feed_cache.get("payload")
+    cached_keywords = feed_cache.get("keywords")
+    cached_at = feed_cache.get("cached_at")
+    if not isinstance(payload, dict):
+        return None
+
     try:
-        payload = json.loads(payload_json)
-        cached_keywords = json.loads(keywords_json)
-        cached_time = datetime.fromisoformat(cached_at)
-    except (json.JSONDecodeError, ValueError, TypeError):
+        if isinstance(cached_at, str):
+            cached_time = datetime.fromisoformat(cached_at)
+        elif isinstance(cached_at, datetime):
+            cached_time = cached_at
+        else:
+            return None
+    except (ValueError, TypeError):
         return None
 
     return {
@@ -336,19 +294,3 @@ def get_feed_cache(user_id: str) -> dict | None:
         "keywords": cached_keywords if isinstance(cached_keywords, list) else [],
         "cached_at": cached_time,
     }
-
-
-if os.getenv("TRACKR_DB_BACKEND", "sqlite").strip().lower() == "firestore":
-    from db_firestore import (  # type: ignore[assignment]
-        add_feed_source,
-        delete_feed_source,
-        get_feed_cache,
-        get_feed_sources,
-        get_watchlist,
-        init_db,
-        invalidate_feed_cache,
-        save_feed_cache,
-        save_feed_sources,
-        save_watchlist,
-        update_feed_source,
-    )

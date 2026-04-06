@@ -28,6 +28,10 @@ export function StepCompanies({
         </p>
       </div>
 
+      <p className="text-[11px] text-muted-foreground">
+        Feed scanning uses Company Name + Ticker + Search Keywords (comma separated).
+      </p>
+
       <AddEntityRow onAdd={onAdd} adding={adding} error={addError} />
 
       <div className="space-y-2">
