@@ -86,11 +86,18 @@ export async function getArticleRead(url) {
 // ── RSS Feed Sources ─────────────────────────────────────────────────────────
 
 function mapFeedSource(item = {}) {
+  const rawCategory = String(item.category || "news").toLowerCase()
+  const category =
+    rawCategory === "filings" ? "filing" :
+    rawCategory === "pressrelease" || rawCategory === "pressreleases" ? "press" :
+    rawCategory
+
   return {
     id: String(item.id || ""),
     url: String(item.url || ""),
     label: String(item.label || ""),
     enabled: Boolean(item.enabled ?? true),
+    category: ["news", "filing", "press"].includes(category) ? category : "news",
   }
 }
 
@@ -110,6 +117,7 @@ export async function createFeedSource(payload) {
       url: payload.url,
       label: payload.label ?? "",
       enabled: payload.enabled ?? true,
+      category: payload.category ?? "news",
     }),
   })
   return mapFeedSource(response)
@@ -123,6 +131,7 @@ export async function updateFeedSource(sourceId, payload) {
       ...(payload.url !== undefined ? { url: payload.url } : {}),
       ...(payload.label !== undefined ? { label: payload.label } : {}),
       ...(payload.enabled !== undefined ? { enabled: payload.enabled } : {}),
+      ...(payload.category !== undefined ? { category: payload.category } : {}),
     }),
   })
   return mapFeedSource(response)

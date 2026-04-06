@@ -36,12 +36,32 @@ def run_pipeline(keywords, feeds_file="feeds.csv", verbose=False):
 def run_pipeline_with_feeds(keywords, feed_urls, verbose=False):
     master_articles = []
 
-    feeds = [str(url).strip() for url in (feed_urls or []) if str(url).strip()]
+    feeds = []
+    for item in (feed_urls or []):
+        if isinstance(item, dict):
+            url = str(item.get("url") or "").strip()
+            category = str(item.get("category") or "news").strip().lower()
+        else:
+            url = str(item).strip()
+            category = "news"
+
+        if not url:
+            continue
+
+        if category not in ("news", "filing", "press"):
+            category = "news"
+
+        feeds.append({"url": url, "category": category})
+
     if verbose:
         print(f"fetched feed count: {len(feeds)}")
 
-    for feed_url in feeds:
+    for feed in feeds:
+        feed_url = feed["url"]
+        feed_category = feed["category"]
         articles = fetch_items(feed_url)
+        for article in articles:
+            article["type"] = feed_category
         if verbose:
             print(f"Feed: {feed_url} -> {len(articles)}")
         master_articles.extend(articles)

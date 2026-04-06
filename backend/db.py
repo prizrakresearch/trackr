@@ -74,6 +74,15 @@ def _make_label(url: str) -> str:
     return host or "RSS feed"
 
 
+def _normalize_source_category(value: str | None) -> str:
+    normalized = str(value or "news").strip().lower()
+    if normalized in ("filing", "filings", "corporate-filing", "corporate_filings", "corporate filings"):
+        return "filing"
+    if normalized in ("press", "pressrelease", "press-release", "press_releases", "press releases"):
+        return "press"
+    return "news"
+
+
 def _normalize_feed_sources(sources: list[dict]) -> list[dict]:
     normalized = []
     seen = set()
@@ -94,6 +103,7 @@ def _normalize_feed_sources(sources: list[dict]) -> list[dict]:
         label = str(entry.get("label") or "").strip() or _make_label(raw_url)
         source_id = str(entry.get("id") or "").strip() or uuid.uuid4().hex[:12]
         enabled = bool(entry.get("enabled", True))
+        category = _normalize_source_category(entry.get("category"))
 
         normalized.append(
             {
@@ -101,6 +111,7 @@ def _normalize_feed_sources(sources: list[dict]) -> list[dict]:
                 "url": raw_url,
                 "label": label,
                 "enabled": enabled,
+                "category": category,
             }
         )
 
@@ -204,9 +215,20 @@ def save_feed_sources(user_id: str, sources: list[dict]) -> list[dict]:
     return normalized
 
 
-def add_feed_source(user_id: str, url: str, label: str = "", enabled: bool = True) -> dict:
+def add_feed_source(
+    user_id: str,
+    url: str,
+    label: str = "",
+    enabled: bool = True,
+    category: str = "news",
+) -> dict:
     sources = get_feed_sources(user_id)
-    candidate = {"url": str(url or "").strip(), "label": label, "enabled": enabled}
+    candidate = {
+        "url": str(url or "").strip(),
+        "label": label,
+        "enabled": enabled,
+        "category": category,
+    }
 
     merged = save_feed_sources(user_id, [*sources, candidate])
     target_url = str(url or "").strip().lower()
@@ -224,6 +246,7 @@ def update_feed_source(
     url: str | None = None,
     label: str | None = None,
     enabled: bool | None = None,
+    category: str | None = None,
 ) -> dict:
     found = False
     updated = []
@@ -238,6 +261,8 @@ def update_feed_source(
                 current["label"] = str(label).strip()
             if enabled is not None:
                 current["enabled"] = bool(enabled)
+            if category is not None:
+                current["category"] = _normalize_source_category(category)
         updated.append(current)
 
     if not found:

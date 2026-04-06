@@ -44,6 +44,7 @@ class FeedItem(BaseModel):
     published: Optional[str] = None
     source: Optional[str] = None
     matched_keyword: Optional[str] = None
+    type: Optional[str] = "news"
 
 
 class FeedResponse(BaseModel):
@@ -58,6 +59,7 @@ class FeedSource(BaseModel):
     url: str
     label: str
     enabled: bool = True
+    category: str = "news"
 
 
 class FeedSourcesResponse(BaseModel):
@@ -71,6 +73,7 @@ class FeedSourceCreateRequest(BaseModel):
     url: str = Field(min_length=8, max_length=2048)
     label: Optional[str] = Field(default=None, max_length=120)
     enabled: bool = True
+    category: str = Field(default="news", max_length=32)
 
 
 class FeedSourceUpdateRequest(BaseModel):
@@ -78,6 +81,7 @@ class FeedSourceUpdateRequest(BaseModel):
     url: Optional[str] = Field(default=None, min_length=8, max_length=2048)
     label: Optional[str] = Field(default=None, max_length=120)
     enabled: Optional[bool] = None
+    category: Optional[str] = Field(default=None, max_length=32)
 
 
 class ArticleReadResponse(BaseModel):
@@ -144,7 +148,7 @@ def read_feed(
     uid = user_id.strip()
     keywords = get_watchlist(uid)
     sources = get_feed_sources(uid)
-    feed_urls = [source.get("url") for source in sources if source.get("enabled", True)]
+    feed_urls = [source for source in sources if source.get("enabled", True)]
 
     if not keywords:
         save_feed_cache(
@@ -270,7 +274,13 @@ def create_feed_source(payload: FeedSourceCreateRequest):
         raise HTTPException(status_code=400, detail="url must start with http:// or https://")
 
     try:
-        source = add_feed_source(uid, url=target, label=payload.label or "", enabled=payload.enabled)
+        source = add_feed_source(
+            uid,
+            url=target,
+            label=payload.label or "",
+            enabled=payload.enabled,
+            category=payload.category,
+        )
         return FeedSource(**source)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
@@ -291,6 +301,7 @@ def patch_feed_source(source_id: str, payload: FeedSourceUpdateRequest):
             url=payload.url.strip() if payload.url is not None else None,
             label=payload.label,
             enabled=payload.enabled,
+            category=payload.category,
         )
         return FeedSource(**updated)
     except ValueError as exc:
