@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: trackr-backend
+    runtime: docker
+    region: oregon
+    plan: free
+    numInstances: 1
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 9696

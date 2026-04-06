@@ -5,11 +5,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import List
 from urllib.parse import urlparse
+import os
 
 import csv
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "trackr.db"
+
+# Use persistent /app/data volume if running on Fly.io, otherwise local dir
+if os.path.exists("/app/data"):
+    DB_PATH = Path("/app/data") / "trackr.db"
+else:
+    DB_PATH = BASE_DIR / "trackr.db"
 
 
 def _get_conn():
@@ -17,6 +23,9 @@ def _get_conn():
 
 
 def init_db() -> None:
+    # Ensure directory exists
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    
     with _get_conn() as conn:
         conn.execute(
             """
