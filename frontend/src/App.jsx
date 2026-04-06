@@ -37,7 +37,9 @@ function AppShell({ profile, companiesHook }) {
       setSettingsOpen(true);
     }
     window.addEventListener("open-settings", handleOpenSettings);
-    return () => window.removeEventListener("open-settings", handleOpenSettings);
+    return () => {
+      window.removeEventListener("open-settings", handleOpenSettings)
+    }
   }, []);
   const [manageOpen, setManageOpen] = useState(false)
 
@@ -277,7 +279,14 @@ function AppShell({ profile, companiesHook }) {
         </div>
       </div>
 
-      <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <Settings
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onOpenManageCompanies={() => {
+          setManageOpen(true)
+          setSettingsOpen(false)
+        }}
+      />
 
       <ManageEntities
         open={manageOpen}

@@ -1,12 +1,25 @@
+import csv
+import io
 from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from article_reader import fetch_article_content
-from db import get_feed_cache, get_watchlist, init_db, save_feed_cache, save_watchlist
+from db import (
+    add_feed_source,
+    delete_feed_source,
+    get_feed_cache,
+    get_feed_sources,
+    get_watchlist,
+    init_db,
+    save_feed_cache,
+    save_watchlist,
+    update_feed_source,
+)
 from pipeline import build_user_feed
 
 
@@ -38,6 +51,33 @@ class FeedResponse(BaseModel):
     total: int
     user_id: str
     applied_keywords: List[str] = Field(default_factory=list)
+
+
+class FeedSource(BaseModel):
+    id: str
+    url: str
+    label: str
+    enabled: bool = True
+
+
+class FeedSourcesResponse(BaseModel):
+    user_id: str
+    sources: List[FeedSource] = Field(default_factory=list)
+    count: int
+
+
+class FeedSourceCreateRequest(BaseModel):
+    user_id: str = Field(min_length=1, max_length=64)
+    url: str = Field(min_length=8, max_length=2048)
+    label: Optional[str] = Field(default=None, max_length=120)
+    enabled: bool = True
+
+
+class FeedSourceUpdateRequest(BaseModel):
+    user_id: str = Field(min_length=1, max_length=64)
+    url: Optional[str] = Field(default=None, min_length=8, max_length=2048)
+    label: Optional[str] = Field(default=None, max_length=120)
+    enabled: Optional[bool] = None
 
 
 class ArticleReadResponse(BaseModel):
@@ -103,6 +143,8 @@ def read_feed(
 ):
     uid = user_id.strip()
     keywords = get_watchlist(uid)
+    sources = get_feed_sources(uid)
+    feed_urls = [source.get("url") for source in sources if source.get("enabled", True)]
 
     if not keywords:
         save_feed_cache(
@@ -141,7 +183,7 @@ def read_feed(
                 )
 
     try:
-        items = build_user_feed(keywords=keywords)
+        items = build_user_feed(keywords=keywords, feed_urls=feed_urls)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"feed pipeline failed: {exc}")
 
@@ -185,3 +227,88 @@ def read_article(url: str = Query(..., min_length=8, max_length=2048)):
         return ArticleReadResponse(**payload)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"article fetch failed: {exc}")
+
+
+@app.get("/api/feed-sources", response_model=FeedSourcesResponse)
+def read_feed_sources(user_id: str = Query(..., min_length=1, max_length=64)):
+    uid = user_id.strip()
+    sources = get_feed_sources(uid)
+    return FeedSourcesResponse(
+        user_id=uid,
+        sources=[FeedSource(**source) for source in sources],
+        count=len(sources),
+    )
+
+
+@app.get("/api/feed-sources/export")
+def export_feed_sources(user_id: str = Query(..., min_length=1, max_length=64)):
+    uid = user_id.strip()
+    sources = [source for source in get_feed_sources(uid) if source.get("enabled", True)]
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["feed_url", "label"])
+    for source in sources:
+        writer.writerow([source.get("url", ""), source.get("label", "")])
+
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    file_name = f"trackr-feed-sources-{uid}-{stamp}.csv"
+    content = output.getvalue()
+
+    return Response(
+        content=content,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
+    )
+
+
+@app.post("/api/feed-sources", response_model=FeedSource)
+def create_feed_source(payload: FeedSourceCreateRequest):
+    uid = payload.user_id.strip()
+    target = payload.url.strip()
+    if not (target.startswith("http://") or target.startswith("https://")):
+        raise HTTPException(status_code=400, detail="url must start with http:// or https://")
+
+    try:
+        source = add_feed_source(uid, url=target, label=payload.label or "", enabled=payload.enabled)
+        return FeedSource(**source)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.patch("/api/feed-sources/{source_id}", response_model=FeedSource)
+def patch_feed_source(source_id: str, payload: FeedSourceUpdateRequest):
+    uid = payload.user_id.strip()
+    if payload.url is not None:
+        target = payload.url.strip()
+        if not (target.startswith("http://") or target.startswith("https://")):
+            raise HTTPException(status_code=400, detail="url must start with http:// or https://")
+
+    try:
+        updated = update_feed_source(
+            uid,
+            source_id=source_id,
+            url=payload.url.strip() if payload.url is not None else None,
+            label=payload.label,
+            enabled=payload.enabled,
+        )
+        return FeedSource(**updated)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.delete("/api/feed-sources", response_model=FeedSourcesResponse)
+def remove_feed_source(
+    user_id: str = Query(..., min_length=1, max_length=64),
+    source_id: str = Query(..., min_length=1, max_length=64),
+):
+    uid = user_id.strip()
+    try:
+        remaining = delete_feed_source(uid, source_id=source_id)
+        return FeedSourcesResponse(
+            user_id=uid,
+            sources=[FeedSource(**source) for source in remaining],
+            count=len(remaining),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))

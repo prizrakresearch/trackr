@@ -13,6 +13,24 @@ async function request(path, options = {}) {
   return res.json()
 }
 
+async function requestBlob(path, options = {}) {
+  const res = await fetch(`${BASE}${path}`, options)
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`API error ${res.status}: ${text}`)
+  }
+
+  const contentDisposition = res.headers.get("Content-Disposition") || ""
+  const fileNameMatch = contentDisposition.match(/filename="?([^";]+)"?/i)
+  const fileName = fileNameMatch?.[1] || "feed-sources.csv"
+
+  return {
+    blob: await res.blob(),
+    fileName,
+    contentType: res.headers.get("Content-Type") || "text/csv",
+  }
+}
+
 // ── Feed ──────────────────────────────────────────────────────────────────────
 
 function mapBackendItemToFeedItem(item = {}) {
@@ -63,6 +81,68 @@ export async function getArticleRead(url) {
   const query = new URLSearchParams()
   query.set("url", url)
   return request(`/api/article/read?${query.toString()}`)
+}
+
+// ── RSS Feed Sources ─────────────────────────────────────────────────────────
+
+function mapFeedSource(item = {}) {
+  return {
+    id: String(item.id || ""),
+    url: String(item.url || ""),
+    label: String(item.label || ""),
+    enabled: Boolean(item.enabled ?? true),
+  }
+}
+
+export async function getFeedSources(userId = getPersistedUserId()) {
+  const query = new URLSearchParams()
+  query.set("user_id", userId)
+  const response = await request(`/api/feed-sources?${query.toString()}`)
+  const sources = Array.isArray(response?.sources) ? response.sources : []
+  return sources.map(mapFeedSource)
+}
+
+export async function createFeedSource(payload) {
+  const response = await request("/api/feed-sources", {
+    method: "POST",
+    body: JSON.stringify({
+      user_id: payload.user_id ?? getPersistedUserId(),
+      url: payload.url,
+      label: payload.label ?? "",
+      enabled: payload.enabled ?? true,
+    }),
+  })
+  return mapFeedSource(response)
+}
+
+export async function updateFeedSource(sourceId, payload) {
+  const response = await request(`/api/feed-sources/${encodeURIComponent(sourceId)}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      user_id: payload.user_id ?? getPersistedUserId(),
+      ...(payload.url !== undefined ? { url: payload.url } : {}),
+      ...(payload.label !== undefined ? { label: payload.label } : {}),
+      ...(payload.enabled !== undefined ? { enabled: payload.enabled } : {}),
+    }),
+  })
+  return mapFeedSource(response)
+}
+
+export async function deleteFeedSource(sourceId, userId = getPersistedUserId()) {
+  const query = new URLSearchParams()
+  query.set("user_id", userId)
+  query.set("source_id", sourceId)
+  const response = await request(`/api/feed-sources?${query.toString()}`, {
+    method: "DELETE",
+  })
+  const sources = Array.isArray(response?.sources) ? response.sources : []
+  return sources.map(mapFeedSource)
+}
+
+export async function exportFeedSources(userId = getPersistedUserId()) {
+  const query = new URLSearchParams()
+  query.set("user_id", userId)
+  return requestBlob(`/api/feed-sources/export?${query.toString()}`)
 }
 
 // ── Companies ─────────────────────────────────────────────────────────────────

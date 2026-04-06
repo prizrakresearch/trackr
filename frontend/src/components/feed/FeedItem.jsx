@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Copy, Check, Star } from "lucide-react"
+import { Copy, Check, Star, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/shared/Badge"
 import { colorFromName } from "@/utils/colors"
@@ -67,6 +67,12 @@ export function FeedItem({ item, company, active, starred = false, onToggleStar,
     setTimeout(() => setCopied(false), 1500)
   }
 
+  function handleOpenOriginal(e) {
+    e.stopPropagation()
+    if (!item.url) return
+    window.open(item.url, "_blank", "noopener,noreferrer")
+  }
+
   return (
     <div
       onClick={onClick}
@@ -116,26 +122,37 @@ export function FeedItem({ item, company, active, starred = false, onToggleStar,
 
       </div>
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          onToggleStar?.()
-        }}
-        className={cn(
-          "opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5 p-1 rounded hover:bg-black/10 dark:hover:bg-white/10",
-          starred ? "text-[#e7b53b]" : "text-muted-foreground"
-        )}
-        aria-label={starred ? "Unstar article" : "Star article"}
-      >
-        <Star size={12} fill={starred ? "currentColor" : "none"} />
-      </button>
+      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 self-center flex flex-col items-center gap-1">
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleStar?.()
+          }}
+          className={cn(
+            "h-8 w-8 inline-flex items-center justify-center rounded hover:bg-black/10 dark:hover:bg-white/10",
+            starred ? "text-[#e7b53b]" : "text-muted-foreground"
+          )}
+          aria-label={starred ? "Unstar article" : "Star article"}
+        >
+          <Star size={15} fill={starred ? "currentColor" : "none"} />
+        </button>
 
-      <button
-        onClick={handleCopy}
-        className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5 p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-muted-foreground"
-      >
-        {copied ? <Check size={12} /> : <Copy size={12} />}
-      </button>
+        <button
+          onClick={handleCopy}
+          className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-black/10 dark:hover:bg-white/10 text-muted-foreground"
+          aria-label="Copy article link"
+        >
+          {copied ? <Check size={15} /> : <Copy size={15} />}
+        </button>
+
+        <button
+          onClick={handleOpenOriginal}
+          className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-black/10 dark:hover:bg-white/10 text-muted-foreground"
+          aria-label="Open original article"
+        >
+          <ExternalLink size={15} />
+        </button>
+      </div>
     </div>
   )
 }

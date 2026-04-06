@@ -1,13 +1,16 @@
-const themeOptions = [
-  { value: "dark", label: "Dark" },
-  { value: "light", label: "Light" },
-  { value: "system", label: "System" },
-];
+import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Modal } from "@/components/shared/Modal"
 import { useSettingsContext } from "@/context/SettingsContext"
 import { ToggleRow } from "./ToggleRow"
 import { DensityPicker } from "./DensityPicker"
+import { EditFeedsModal } from "./EditFeedsModal"
+
+const themeOptions = [
+  { value: "dark", label: "Dark" },
+  { value: "light", label: "Light" },
+  { value: "system", label: "System" },
+]
 
 const openModeOptions = [
   { value: "panel", label: "Detail panel" },
@@ -29,10 +32,11 @@ function sanitizeShortcutKey(value) {
   return /^[a-z0-9]$/.test(next) ? next : ""
 }
 
-export function Settings({ open, onClose }) {
+export function Settings({ open, onClose, onOpenManageCompanies }) {
   const { settings, updateSettings, systemTheme } = useSettingsContext()
   const resolvedTheme = settings.theme === "system" ? systemTheme : settings.theme
   const isLightTheme = resolvedTheme === "light"
+  const [feedEditorOpen, setFeedEditorOpen] = useState(false)
 
   function updateShortcut(id, rawValue) {
     const next = sanitizeShortcutKey(rawValue)
@@ -45,8 +49,14 @@ export function Settings({ open, onClose }) {
     })
   }
 
+  function openManageCompanies() {
+    onOpenManageCompanies?.()
+    onClose?.()
+  }
+
   return (
-    <Modal open={open} onClose={onClose} title="Settings" className="max-w-lg mx-3 sm:mx-0">
+    <>
+      <Modal open={open} onClose={onClose} title="Settings" className="max-w-lg mx-3 sm:mx-0">
 
       <div className="px-5 py-4 space-y-6">
         <section className="space-y-2.5">
@@ -62,7 +72,7 @@ export function Settings({ open, onClose }) {
                 key={option.value}
                 onClick={() => updateSettings({ theme: option.value })}
                 className={cn(
-                  "h-8 w-full rounded-md border text-[12px] font-medium transition-colors",
+                  "h-9 w-full rounded-md border text-[12px] font-medium transition-colors",
                   settings.theme === option.value
                     ? "border-slate-300 bg-slate-900 text-white dark:border-[#1e4a78] dark:bg-[#1a3a5c] dark:text-[#7bb8f0]"
                     : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/5 dark:hover:text-white"
@@ -170,7 +180,58 @@ export function Settings({ open, onClose }) {
             })}
           </div>
         </section>
+
+        <section
+          className={cn(
+            "rounded-lg border p-3 flex items-start justify-between gap-3",
+            isLightTheme ? "border-slate-200 bg-white" : "border-white/10 bg-[#141518]"
+          )}
+        >
+          <div className="space-y-0.5 min-w-0">
+            <h3 className="text-[13px] font-medium text-foreground">RSS feeds</h3>
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-300">
+              Manage your feed sources in a dedicated editor.
+            </p>
+          </div>
+
+          <div className="shrink-0">
+            <button
+              type="button"
+              onClick={() => setFeedEditorOpen(true)}
+              className="h-9 inline-flex items-center rounded-md border border-slate-300 bg-slate-900 px-3 text-[12px] font-medium text-white transition-colors hover:bg-slate-800 dark:border-[#1e4a78] dark:bg-[#1a3a5c] dark:text-[#7bb8f0] dark:hover:bg-[#204a73]"
+            >
+              Edit feeds
+            </button>
+          </div>
+        </section>
+
+        <section
+          className={cn(
+            "rounded-lg border p-3 flex items-start justify-between gap-3",
+            isLightTheme ? "border-slate-200 bg-white" : "border-white/10 bg-[#141518]"
+          )}
+        >
+          <div className="space-y-0.5 min-w-0">
+            <h3 className="text-[13px] font-medium text-foreground">Manage companies</h3>
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-300">
+              Open your company watchlist editor.
+            </p>
+          </div>
+
+          <div className="shrink-0">
+            <button
+              type="button"
+              onClick={openManageCompanies}
+              className="h-9 inline-flex items-center rounded-md border border-slate-300 bg-slate-900 px-3 text-[12px] font-medium text-white transition-colors hover:bg-slate-800 dark:border-[#1e4a78] dark:bg-[#1a3a5c] dark:text-[#7bb8f0] dark:hover:bg-[#204a73]"
+            >
+              Manage companies
+            </button>
+          </div>
+        </section>
       </div>
-    </Modal>
+      </Modal>
+
+      <EditFeedsModal open={feedEditorOpen} onClose={() => setFeedEditorOpen(false)} />
+    </>
   )
 }
