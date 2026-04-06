@@ -5,6 +5,7 @@ import { useSettingsContext } from "@/context/SettingsContext"
 import {
   createFeedSource,
   deleteFeedSource,
+  exportFeedSources,
   getFeedSources,
   updateFeedSource,
 } from "@/utils/api"
@@ -37,6 +38,7 @@ export function EditFeedsModal({ open, onClose }) {
   const [bulkSaving, setBulkSaving] = useState(false)
   const [bulkDeleting, setBulkDeleting] = useState(false)
   const [uploadingCsv, setUploadingCsv] = useState(false)
+  const [exportingCsv, setExportingCsv] = useState(false)
   const csvInputRef = useRef(null)
 
   useEffect(() => {
@@ -234,6 +236,27 @@ export function EditFeedsModal({ open, onClose }) {
       if (csvInputRef.current) {
         csvInputRef.current.value = ""
       }
+    }
+  }
+
+  async function handleExportCsv() {
+    try {
+      setExportingCsv(true)
+      setFeedsError("")
+
+      const { blob, fileName } = await exportFeedSources()
+      const objectUrl = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = objectUrl
+      link.download = fileName || "feed-sources.csv"
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(objectUrl)
+    } catch (err) {
+      setFeedsError(err?.message || "Failed to export CSV")
+    } finally {
+      setExportingCsv(false)
     }
   }
 
@@ -472,7 +495,7 @@ export function EditFeedsModal({ open, onClose }) {
           })}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_170px_auto_auto] gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_170px_auto_auto_auto] gap-2">
           <input
             value={newFeedUrl}
             onChange={(e) => setNewFeedUrl(e.target.value)}
@@ -507,6 +530,20 @@ export function EditFeedsModal({ open, onClose }) {
             )}
           >
             {uploadingCsv ? "Uploading..." : "Upload CSV"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={exportingCsv}
+            className={cn(
+              "h-9 px-3 rounded-md border text-[12px] disabled:opacity-50 disabled:cursor-not-allowed",
+              isLightTheme
+                ? "border-slate-300 text-slate-700 hover:bg-slate-100"
+                : "border-white/10 text-zinc-200 hover:bg-white/5"
+            )}
+          >
+            {exportingCsv ? "Exporting..." : "Export CSV"}
           </button>
 
           <input

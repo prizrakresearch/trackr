@@ -251,9 +251,9 @@ def export_feed_sources(user_id: str = Query(..., min_length=1, max_length=64)):
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["feed_url", "label"])
+    writer.writerow(["feed_url", "category"])
     for source in sources:
-        writer.writerow([source.get("url", ""), source.get("label", "")])
+        writer.writerow([source.get("url", ""), source.get("category", "news")])
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     file_name = f"trackr-feed-sources-{uid}-{stamp}.csv"
