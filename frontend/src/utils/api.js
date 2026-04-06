@@ -1,5 +1,5 @@
 const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:9696"
-const DEFAULT_USER_ID = import.meta.env.VITE_USER_ID ?? "u1"
+const ENV_USER_ID = String(import.meta.env.VITE_USER_ID ?? "").trim()
 
 const DEFAULT_COMPANIES = [
   {
@@ -142,17 +142,23 @@ function getPersistedUserId() {
     }
   }
 
+  function generateAnonymousUserId() {
+    const rawId =
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+
+    const compact = String(rawId).toLowerCase().replace(/[^a-z0-9]/g, "")
+    return `anon_${compact}`
+  }
+
   try {
     const profile = getTrackrProfile()
     const profileUserId = fromTrackrProfile(profile)
     const value = localStorage.getItem("trackr_user_id")
+
     if (value && value.trim()) {
-      const existing = value.trim()
-      if (existing.startsWith("profile_") && !profileUserId) {
-        localStorage.setItem("trackr_user_id", DEFAULT_USER_ID)
-        return DEFAULT_USER_ID
-      }
-      return existing
+      return value.trim()
     }
 
     if (profileUserId) {
@@ -160,11 +166,20 @@ function getPersistedUserId() {
       return profileUserId
     }
 
-    localStorage.setItem("trackr_user_id", DEFAULT_USER_ID)
+    if (ENV_USER_ID) {
+      localStorage.setItem("trackr_user_id", ENV_USER_ID)
+      return ENV_USER_ID
+    }
+
+    const generated = generateAnonymousUserId()
+    localStorage.setItem("trackr_user_id", generated)
+    return generated
   } catch {
-    // Ignore storage read errors and fall back to defaults.
+    // Ignore storage read errors and fall back to an environment-defined id when available.
   }
-  return DEFAULT_USER_ID
+
+  if (ENV_USER_ID) return ENV_USER_ID
+  return "anon_fallback"
 }
 
 export function ensurePersistedUserId() {
