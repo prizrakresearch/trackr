@@ -1,6 +1,54 @@
 const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:9696"
 const DEFAULT_USER_ID = import.meta.env.VITE_USER_ID ?? "u1"
 
+const DEFAULT_COMPANIES = [
+  {
+    name: "Apollo Tyres Limited",
+    symbol: "APOLLOTYRE",
+    avatarUrl: "https://logo.clearbit.com/apollotyres.com",
+    keywords: ["Apollo", "Apollo Tyres", "Apollo Tyre", "APOLLOTYRE", "tyre", "tyres"],
+  },
+  {
+    name: "Indag Rubber Limited",
+    symbol: "INDAG",
+    avatarUrl: "https://logo.clearbit.com/indagrubber.com",
+    keywords: ["Indag", "Indag Rubber", "INDAG", "retread", "retreading", "precured tread"],
+  },
+  {
+    name: "MRF Limited",
+    symbol: "MRF",
+    avatarUrl: "https://logo.clearbit.com/mrftyres.com",
+    keywords: ["MRF", "MRF Tyres", "MRF Limited", "tyre", "tyres"],
+  },
+  {
+    name: "CEAT Limited",
+    symbol: "CEATLTD",
+    avatarUrl: "https://logo.clearbit.com/ceat.com",
+    keywords: ["CEAT", "CEATLTD", "CEAT Limited", "CEAT Tyres", "tyre", "tyres"],
+  },
+  {
+    name: "JK Tyre & Industries Limited",
+    symbol: "JKTYRE",
+    avatarUrl: "https://logo.clearbit.com/jktyre.com",
+    keywords: ["JK Tyre", "JKTYRE", "JK Tyre & Industries", "JK Tyres", "tyre", "tyres"],
+  },
+  {
+    name: "Midas Touch Investors Association Pvt Ltd",
+    symbol: "MIDAS",
+    avatarUrl: null,
+    keywords: [
+      "Midas",
+      "Midas Touch",
+      "Midas Touch Investors",
+      "Midas Touch Investors Association",
+      "Midas Touch Investors Association Pvt Ltd",
+      "Midas Touch Investors Association Private Limited",
+      "MIDAS",
+      "MTIA",
+    ],
+  },
+]
+
 async function request(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, {
     headers: { "Content-Type": "application/json", ...options.headers },
@@ -197,6 +245,25 @@ async function syncWatchlistFromCompanies(companies = [], userId = getPersistedU
   await saveWatchlistKeywords(keywords, userId)
 }
 
+function withCompanyIds(companies = []) {
+  return companies.map((company, index) => ({
+    id: String(company?.id || `seed-${index + 1}`),
+    name: String(company?.name || "").trim(),
+    symbol: String(company?.symbol || "").trim() || undefined,
+    avatarUrl: company?.avatarUrl ? String(company.avatarUrl) : null,
+    keywords: Array.isArray(company?.keywords)
+      ? company.keywords.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+  }))
+}
+
+function bootstrapCompaniesIfEmpty(companies = []) {
+  if (Array.isArray(companies) && companies.length > 0) {
+    return withCompanyIds(companies)
+  }
+  return withCompanyIds(DEFAULT_COMPANIES)
+}
+
 // ── Companies ─────────────────────────────────────────────────────────────────
 
 
@@ -209,6 +276,9 @@ export function getCompanies() {
   } catch {
     companies = [];
   }
+
+  companies = bootstrapCompaniesIfEmpty(companies)
+  localStorage.setItem(key, JSON.stringify(companies))
 
   // Keep backend keyword scan list aligned to company name + ticker.
   syncWatchlistFromCompanies(companies).catch(() => {})

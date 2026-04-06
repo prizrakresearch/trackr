@@ -15,6 +15,7 @@ export function CompanyItem({ company, active, count, onClick, collapsed }) {
     >
       <Avatar
         name={company.name}
+        avatarUrl={company.avatarUrl}
         size="sm"
         shape="square"
       />
