@@ -19,6 +19,21 @@ export function getDateLabel(dateInput) {
   })
 }
 
+export function isSameLocalDay(dateInput, referenceDate = new Date()) {
+  const date = new Date(dateInput)
+  if (Number.isNaN(date.getTime())) return false
+
+  return (
+    date.getFullYear() === referenceDate.getFullYear() &&
+    date.getMonth() === referenceDate.getMonth() &&
+    date.getDate() === referenceDate.getDate()
+  )
+}
+
+export function isToday(dateInput) {
+  return isSameLocalDay(dateInput)
+}
+
 export function groupByDate(items = []) {
   const groups = []
   const seen = new Map()

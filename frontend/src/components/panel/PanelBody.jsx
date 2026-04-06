@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/shared/Badge"
 import { colorFromName } from "@/utils/colors"
+import { getArticleRead } from "@/utils/api"
 
 function getHost(url) {
   if (!url) return "-"
@@ -13,8 +15,44 @@ function getHost(url) {
 export function PanelBody({ item, company }) {
   const companyColor = company ? colorFromName(company.name) : null
   const publishedLabel = item.published_at ?? item.publishedAt ?? "-"
-  const summary =
+  const defaultSummary =
     item.summary ?? item.description ?? item.excerpt ?? item.content ?? null
+  const [article, setArticle] = useState(null)
+  const [loadingArticle, setLoadingArticle] = useState(false)
+  const [articleError, setArticleError] = useState("")
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadArticle() {
+      if (!item?.url) {
+        setArticle(null)
+        return
+      }
+
+      setLoadingArticle(true)
+      setArticleError("")
+      try {
+        const payload = await getArticleRead(item.url)
+        if (!cancelled) setArticle(payload)
+      } catch (error) {
+        if (!cancelled) {
+          setArticle(null)
+          setArticleError(error?.message || "Unable to fetch full article content")
+        }
+      } finally {
+        if (!cancelled) setLoadingArticle(false)
+      }
+    }
+
+    loadArticle()
+    return () => {
+      cancelled = true
+    }
+  }, [item?.url])
+
+  const summary = article?.summary?.trim() || defaultSummary
+  const fullContent = article?.content?.trim() || ""
 
   const rows = [
     { label: "Company", value: company?.name ?? "All companies" },
@@ -45,9 +83,34 @@ export function PanelBody({ item, company }) {
 
         {summary && (
           <div className="rounded-md border border-white/10 bg-black/[0.04] dark:bg-white/[0.04] p-3">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 mb-2">
+              Summary
+            </p>
             <p className="text-[12px] text-foreground/90 leading-relaxed whitespace-pre-wrap">
               {summary}
             </p>
+          </div>
+        )}
+
+        {(loadingArticle || fullContent || articleError) && (
+          <div className="rounded-md border border-white/10 bg-black/[0.04] dark:bg-white/[0.04] p-3">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 mb-2">
+              Content
+            </p>
+
+            {loadingArticle && (
+              <p className="text-[12px] text-muted-foreground">Fetching full article content…</p>
+            )}
+
+            {!loadingArticle && articleError && (
+              <p className="text-[12px] text-[#e07070]">{articleError}</p>
+            )}
+
+            {!loadingArticle && !articleError && fullContent && (
+              <p className="text-[12px] text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                {fullContent}
+              </p>
+            )}
           </div>
         )}
 

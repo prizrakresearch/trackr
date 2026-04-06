@@ -63,7 +63,7 @@ export function AddEntityRow({ onAdd, adding = false, error = "" }) {
           type="button"
           disabled={disabled}
           onClick={handleSubmit}
-          className="h-9 inline-flex items-center gap-1.5 rounded-md border border-[#1e4a78] bg-[#1a3a5c] px-3 text-[12px] font-medium text-[#7bb8f0] transition-colors hover:bg-[#204a73] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="h-9 inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-slate-900 px-3 text-[12px] font-medium text-white transition-colors hover:bg-slate-800 dark:border-[#1e4a78] dark:bg-[#1a3a5c] dark:text-[#7bb8f0] dark:hover:bg-[#204a73] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {adding ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
           Add entity

@@ -13,6 +13,7 @@ export function SearchBar({ value, onChange, className, fullWidth = false }) {
       />
       <input
         type="text"
+        data-hotkey-search="true"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}

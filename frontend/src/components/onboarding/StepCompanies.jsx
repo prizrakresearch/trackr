@@ -58,7 +58,7 @@ export function StepCompanies({
         <button
           type="submit"
           disabled={!hasCompanies}
-          className="h-10 inline-flex items-center gap-1.5 rounded-md border border-[#1e4a78] bg-[#1a3a5c] px-4 text-[12px] font-medium text-[#7bb8f0] transition-colors hover:bg-[#204a73] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="h-10 inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-slate-900 px-4 text-[12px] font-medium text-white transition-colors hover:bg-slate-800 dark:border-[#1e4a78] dark:bg-[#1a3a5c] dark:text-[#7bb8f0] dark:hover:bg-[#204a73] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue
           <ArrowRight size={13} />

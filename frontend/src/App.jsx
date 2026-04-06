@@ -3,7 +3,7 @@ import { AppProvider, useApp } from "@/context/AppContext"
 import { SettingsProvider, useSettingsContext } from "@/context/SettingsContext"
 import { useCompanies } from "@/hooks/useCompanies"
 import { useFeed } from "@/hooks/useFeed"
-import { useProfile } from "@/hooks/userProfile"
+import { useProfile, normalizeProfile } from "@/hooks/userProfile"
 import { getCompanies, addCompany, removeCompany } from "@/utils/api"
 import { Sidebar } from "@/components/sidebar/Sidebar"
 import { FeedHeader } from "@/components/feed/FeedHeader"
@@ -18,8 +18,17 @@ import { Onboarding } from "@/components/onboarding/Onboarding"
 function AppShell({ profile, companiesHook }) {
   const { companies, loading: companiesLoading, error: companiesError, add, remove } = companiesHook
   const { settings, updateSettings } = useSettingsContext()
-  const { activeCompanyId, typeFilter, search, activeItemId, clearActiveItem } = useApp()
+  const {
+    activeCompanyId,
+    setActiveCompanyId,
+    typeFilter,
+    search,
+    activeItemId,
+    clearActiveItem,
+    setFeedMode,
+  } = useApp()
 
+  const [hasVisitedSpecificCompany, setHasVisitedSpecificCompany] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Listen for sidebar settings button
@@ -36,6 +45,8 @@ function AppShell({ profile, companiesHook }) {
     items,
     loading: feedLoading,
     error: feedError,
+    refreshFeed,
+    lastUpdatedAt,
   } = useFeed({
     companyId: activeCompanyId,
     type: typeFilter,
@@ -63,10 +74,70 @@ function AppShell({ profile, companiesHook }) {
     : null
 
   useEffect(() => {
+    if (activeCompanyId !== 0) {
+      setHasVisitedSpecificCompany(true)
+    }
+  }, [activeCompanyId])
+
+  useEffect(() => {
+    function isEditableTarget(target) {
+      if (!(target instanceof HTMLElement)) return false
+      const tag = target.tagName.toLowerCase()
+      return tag === "input" || tag === "textarea" || target.isContentEditable
+    }
+
+    function focusVisibleSearchInput() {
+      const inputs = Array.from(document.querySelectorAll('input[data-hotkey-search="true"]'))
+      const visible = inputs.find((node) => node instanceof HTMLElement && node.offsetParent !== null)
+      if (visible instanceof HTMLInputElement) {
+        visible.focus()
+        visible.select()
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (!event.metaKey || event.ctrlKey || event.altKey) return
+
+      const key = event.key.toLowerCase()
+      const toggleSidebarKey = String(settings.shortcuts?.toggleSidebar || "s").toLowerCase()
+      const focusSearchKey = String(settings.shortcuts?.focusSearch || "d").toLowerCase()
+      const refreshFeedKey = String(settings.shortcuts?.refreshFeed || "r").toLowerCase()
+
+      if (key === toggleSidebarKey) {
+        event.preventDefault()
+        updateSettings({ sidebarOpen: !settings.sidebarOpen })
+        return
+      }
+
+      if (key === focusSearchKey) {
+        event.preventDefault()
+        focusVisibleSearchInput()
+        return
+      }
+
+      if (key === refreshFeedKey) {
+        // Override browser reload to trigger feed refresh hotkey.
+        event.preventDefault()
+        refreshFeed()
+        return
+      }
+
+      if (isEditableTarget(event.target)) {
+        return
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [refreshFeed, settings.sidebarOpen, settings.shortcuts, updateSettings])
+
+  useEffect(() => {
     const username = (profile?.name?.trim() || "User").toLowerCase()
 
     if (activeCompanyId === 0) {
-      document.title = `trackr - ${username}`
+      document.title = hasVisitedSpecificCompany
+        ? "trackr - All Companies"
+        : `trackr - ${username}`
       return
     }
 
@@ -78,7 +149,7 @@ function AppShell({ profile, companiesHook }) {
       username
 
     document.title = `trackr - ${shortName}`
-  }, [activeCompanyId, companies, profile?.name])
+  }, [activeCompanyId, companies, profile?.name, hasVisitedSpecificCompany])
 
   return (
     <>
@@ -90,6 +161,14 @@ function AppShell({ profile, companiesHook }) {
           feedItems={items}
           profile={profile}
           onManageEntities={() => setManageOpen(true)}
+          onOpenStarred={() => {
+            setFeedMode("starred")
+            setActiveCompanyId(0)
+            clearActiveItem()
+          }}
+          onRefresh={refreshFeed}
+          lastUpdatedAt={lastUpdatedAt}
+          refreshLoading={feedLoading}
         />
 
         <div className="flex-1 min-w-0 flex flex-col bg-background">
@@ -128,12 +207,13 @@ function AppShell({ profile, companiesHook }) {
         )}
 
         <div
-          className={`fixed left-0 top-0 h-full w-[210px] bg-background border-r border-white/10 z-50 transition-transform duration-200 ${
+          className={`fixed left-0 top-0 h-full w-[70vw] bg-background border-r border-white/10 z-50 transition-transform duration-200 ${
             settings.sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
           <Sidebar
             open={true}
+            fullWidth={true}
             companies={companies}
             feedItems={items}
             profile={profile}
@@ -141,6 +221,15 @@ function AppShell({ profile, companiesHook }) {
               setManageOpen(true)
               updateSettings({ sidebarOpen: false })
             }}
+            onOpenStarred={() => {
+              setFeedMode("starred")
+              setActiveCompanyId(0)
+              clearActiveItem()
+              updateSettings({ sidebarOpen: false })
+            }}
+            onRefresh={refreshFeed}
+            lastUpdatedAt={lastUpdatedAt}
+            refreshLoading={feedLoading}
           />
         </div>
 
@@ -219,15 +308,18 @@ function AppWithProviders({ profile, companiesHook }) {
 function App() {
   const { hasCompletedOnboarding, completeOnboarding: markOnboardingComplete, updateProfile, profile } = useProfile();
   const companiesHook = useCompanies();
+  const PROFILE_STORAGE_KEY = "trackr_profile";
 
   if (!hasCompletedOnboarding) {
     // Onboarding state (local, not from hooks)
     const [onboardProfile, setOnboardProfile] = useState(() => {
       try {
         const stored = localStorage.getItem("trackr_profile");
-        return stored ? JSON.parse(stored) : { name: "", avatarUrl: null };
+        return stored
+          ? normalizeProfile(JSON.parse(stored))
+          : normalizeProfile({ name: "", avatarUrl: null, avatarColor: null, avatarTextColor: null });
       } catch {
-        return { name: "", avatarUrl: null };
+        return normalizeProfile({ name: "", avatarUrl: null, avatarColor: null, avatarTextColor: null });
       }
     });
     const [onboardCompanies, setOnboardCompanies] = useState([]);
@@ -247,7 +339,11 @@ function App() {
     }, []);
 
     function setOnboardProfileFields(updates) {
-      setOnboardProfile((prev) => ({ ...prev, ...updates }));
+      setOnboardProfile((prev) => {
+        const next = normalizeProfile({ ...prev, ...updates }, { trimText: false });
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
     }
     function nextStep() {
       setStepIndex((prev) => {
@@ -297,8 +393,10 @@ function App() {
     async function handleFinish() {
       try {
         setFinishing(true);
+        const finalProfile = normalizeProfile(onboardProfile);
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(finalProfile));
         // Update the profile in useProfile hook
-        updateProfile(onboardProfile);
+        updateProfile(finalProfile);
         // Mark onboarding complete
         markOnboardingComplete();
         // No reload: let React rerender and localStorage update

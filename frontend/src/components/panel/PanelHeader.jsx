@@ -1,6 +1,10 @@
-import { X, ExternalLink } from "lucide-react"
+import { X, ExternalLink, Star } from "lucide-react"
+import { useApp } from "@/context/AppContext"
 
 export function PanelHeader({ item, onClose }) {
+  const { isStarred, toggleStar } = useApp()
+  const starred = isStarred(item.id)
+
   return (
     <div className="h-11 flex items-center justify-between px-3 border-b border-white/10 flex-shrink-0">
       <div className="flex items-center gap-2">
@@ -18,6 +22,13 @@ export function PanelHeader({ item, onClose }) {
             <ExternalLink size={10} />
           </a>
         )}
+        <button
+          onClick={() => toggleStar(item.id)}
+          className="flex items-center gap-1 px-2 py-1 text-[11px] text-muted-foreground border border-white/10 rounded-md hover:border-[#e7b53b] hover:text-[#e7b53b] hover:bg-[#3a2b10]/20 transition-colors"
+        >
+          <Star size={10} fill={starred ? "currentColor" : "none"} />
+          {starred ? "Starred" : "Star"}
+        </button>
       </div>
       <button
         onClick={onClose}

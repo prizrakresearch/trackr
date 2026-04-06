@@ -1,20 +1,49 @@
 import { useState, useEffect } from "react"
 
+const DEFAULT_SHORTCUTS = {
+  toggleSidebar: "s",
+  focusSearch: "d",
+  refreshFeed: "r",
+}
+
 const DEFAULTS = {
   density: "comfortable",
   sidebarOpen: true,
   scope: "today",
   openMode: "panel",
-  theme: "dark", // 'dark', 'light', or 'system'
+  theme: "system", // 'dark', 'light', or 'system'
+  shortcuts: DEFAULT_SHORTCUTS,
 }
 
 const STORAGE_KEY = "trackr_settings"
+
+function sanitizeShortcutKey(value, fallback) {
+  const next = String(value ?? "").trim().toLowerCase()
+  if (/^[a-z0-9]$/.test(next)) return next
+  return fallback
+}
+
+function normalizeShortcuts(shortcuts = {}) {
+  return {
+    toggleSidebar: sanitizeShortcutKey(shortcuts.toggleSidebar, DEFAULT_SHORTCUTS.toggleSidebar),
+    focusSearch: sanitizeShortcutKey(shortcuts.focusSearch, DEFAULT_SHORTCUTS.focusSearch),
+    refreshFeed: sanitizeShortcutKey(shortcuts.refreshFeed, DEFAULT_SHORTCUTS.refreshFeed),
+  }
+}
+
+function normalizeSettings(raw) {
+  const merged = { ...DEFAULTS, ...(raw || {}) }
+  return {
+    ...merged,
+    shortcuts: normalizeShortcuts(merged.shortcuts),
+  }
+}
 
 export function useSettings() {
   const [settings, setSettings] = useState(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
-      return stored ? { ...DEFAULTS, ...JSON.parse(stored) } : DEFAULTS
+      return stored ? normalizeSettings(JSON.parse(stored)) : DEFAULTS
     } catch {
       return DEFAULTS
     }
@@ -52,7 +81,7 @@ export function useSettings() {
   }, [settings.theme])
 
   function updateSettings(updates) {
-    setSettings((prev) => ({ ...prev, ...updates }))
+    setSettings((prev) => normalizeSettings({ ...prev, ...updates }))
   }
 
   return { settings, updateSettings, systemTheme }

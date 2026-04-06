@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { StepDots } from "./StepDots"
 import { StepProfile } from "./StepProfile"
 import { StepCompanies } from "./StepCompanies"
@@ -23,6 +23,46 @@ export function Onboarding({
   finishing,
   stepLabels = ["Profile", "Companies", "Review"],
 }) {
+  useEffect(() => {
+    document.title = "trackr - Onboarding"
+  }, [])
+
+  useEffect(() => {
+    const storageKey = "trackr_settings"
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+
+    function applyThemeFromPreference(preference) {
+      const resolved = preference === "system"
+        ? (mediaQuery.matches ? "dark" : "light")
+        : preference
+
+      document.documentElement.classList.toggle("dark", resolved === "dark")
+    }
+
+    let preference = "system"
+    try {
+      const raw = localStorage.getItem(storageKey)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (["dark", "light", "system"].includes(parsed?.theme)) {
+          preference = parsed.theme
+        }
+      }
+    } catch {
+      preference = "system"
+    }
+
+    applyThemeFromPreference(preference)
+
+    if (preference === "system") {
+      const onSystemThemeChange = () => applyThemeFromPreference("system")
+      mediaQuery.addEventListener("change", onSystemThemeChange)
+      return () => mediaQuery.removeEventListener("change", onSystemThemeChange)
+    }
+
+    return undefined
+  }, [])
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex min-h-screen w-full max-w-3xl items-center justify-center px-4 py-10">

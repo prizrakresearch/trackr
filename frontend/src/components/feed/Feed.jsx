@@ -1,12 +1,20 @@
 import { useApp } from "@/context/AppContext"
 import { useSettingsContext } from "@/context/SettingsContext"
-import { groupByDate } from "@/utils/dateGroup"
-import { DateGroupLabel } from "./DateGroupLabel"
+import { isToday } from "@/utils/dateGroup"
 import { FeedItem } from "./FeedItem"
 import { FeedEmpty } from "./FeedEmpty"
 
 export function Feed({ items, companies, loading }) {
-  const { activeCompanyId, activeItemId, setActiveItemId, typeFilter, search } = useApp()
+  const {
+    activeCompanyId,
+    activeItemId,
+    setActiveItemId,
+    typeFilter,
+    search,
+    feedMode,
+    isStarred,
+    toggleStar,
+  } = useApp()
   const { settings } = useSettingsContext()
   const selectedCompany = companies.find((company) => company.id === activeCompanyId)
 
@@ -28,10 +36,10 @@ export function Feed({ items, companies, loading }) {
       !search ||
       item.title.toLowerCase().includes(search.toLowerCase()) ||
       item.source.toLowerCase().includes(search.toLowerCase())
-    return matchCompany && matchType && matchSearch
+    const matchScope = settings.scope === "all" || isToday(item.published_at)
+    const matchStarred = feedMode !== "starred" || isStarred(item.id)
+    return matchCompany && matchType && matchSearch && matchScope && matchStarred
   })
-
-  const groups = groupByDate(filtered)
 
   if (loading) {
     return (
@@ -42,36 +50,33 @@ export function Feed({ items, companies, loading }) {
   }
 
   if (!filtered.length) {
-    return <FeedEmpty search={search} />
+    return <FeedEmpty search={search} noArticles={items.length === 0} />
   }
 
   return (
     <div className="flex-1 overflow-y-auto">
-      {groups.map((group) => (
-        <div key={group.label}>
-          <DateGroupLabel label={group.label} count={group.items.length} />
-          {group.items.map((item) => {
-            const company =
-              companies.find((c) => c.id === item.company_id) ||
-              companies.find((c) => {
-                if (!item?.matched_keyword) return false
-                return String(c.name ?? "")
-                  .toLowerCase()
-                  .includes(String(item.matched_keyword).toLowerCase())
-              })
-            return (
-              <FeedItem
-                key={item.id}
-                item={item}
-                company={company}
-                active={activeItemId === item.id}
-                density={settings.density}
-                onClick={() => setActiveItemId(item.id)}
-              />
-            )
-          })}
-        </div>
-      ))}
+      {filtered.map((item) => {
+        const company =
+          companies.find((c) => c.id === item.company_id) ||
+          companies.find((c) => {
+            if (!item?.matched_keyword) return false
+            return String(c.name ?? "")
+              .toLowerCase()
+              .includes(String(item.matched_keyword).toLowerCase())
+          })
+        return (
+          <FeedItem
+            key={item.id}
+            item={item}
+            company={company}
+            active={activeItemId === item.id}
+            starred={isStarred(item.id)}
+            onToggleStar={() => toggleStar(item.id)}
+            density={settings.density}
+            onClick={() => setActiveItemId(item.id)}
+          />
+        )
+      })}
     </div>
   )
 }

@@ -16,8 +16,8 @@ export function DensityPicker({ value, onChange }) {
           className={cn(
             "flex-1 py-1.5 text-[11px] rounded-md border transition-colors",
             value === opt.value
-              ? "bg-[#1a3a5c] text-[#7bb8f0] border-[#1e4a78]"
-              : "border-white/10 text-muted-foreground hover:text-foreground"
+              ? "border-slate-300 bg-slate-900 text-white dark:border-[#1e4a78] dark:bg-[#1a3a5c] dark:text-[#7bb8f0]"
+              : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/5 dark:hover:text-white"
           )}
         >
           {opt.label}

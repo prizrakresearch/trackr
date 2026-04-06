@@ -1,12 +1,12 @@
 import { useState } from "react"
-import { Copy, Check } from "lucide-react"
+import { Copy, Check, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/shared/Badge"
 import { colorFromName } from "@/utils/colors"
 
 const densityPadding = {
   compact: "px-3 py-2",
-  comfortable: "px-3 py-3",
+  comfortable: "px-3 py-4",
   spacious: "px-3 py-5",
 }
 
@@ -22,6 +22,12 @@ function normalizeType(type) {
   if (value === "press-release" || value === "press_release") return "press"
   // Default everything else (including "info") to "news"
   return "news"
+}
+
+function getSummaryText(value) {
+  const raw = String(value ?? "").trim()
+  if (!raw) return ""
+  return raw.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
 }
 
 function toHashtag(value, fallback = "unknown") {
@@ -49,10 +55,10 @@ function dateTagValue(rawDate) {
   }
 }
 
-export function FeedItem({ item, company, active, density = "comfortable", onClick }) {
+export function FeedItem({ item, company, active, starred = false, onToggleStar, density = "comfortable", onClick }) {
   const [copied, setCopied] = useState(false)
   const companyColor = company ? colorFromName(company.name) : colorFromName("All Companies")
-  const normalizedType = normalizeType(item.type)
+  const summaryText = getSummaryText(item.summary ?? item.content)
 
   function handleCopy(e) {
     e.stopPropagation()
@@ -76,6 +82,20 @@ export function FeedItem({ item, company, active, density = "comfortable", onCli
         <p className="text-[13px] font-medium text-foreground leading-snug mb-1.5 truncate">
           {item.title}
         </p>
+
+        {summaryText && (
+          <p
+            className="text-[12px] text-muted-foreground/65 leading-5 mb-1.5 overflow-hidden"
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
+            {summaryText}
+          </p>
+        )}
+
         <div className="flex items-center gap-1.5 flex-wrap">
           <Badge type={item.type} />
           {company && (
@@ -94,29 +114,21 @@ export function FeedItem({ item, company, active, density = "comfortable", onCli
           <span className="text-[11px] text-muted-foreground/60">{item.published_at}</span>
         </div>
 
-        <div className="mt-2 flex items-center gap-2 flex-wrap">
-          <span
-            className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium bg-transparent"
-            style={{
-              color: companyColor.text,
-              borderColor: companyColor.text,
-            }}
-          >
-            {company?.name || "All Companies"}
-          </span>
-          <span className="inline-flex items-center rounded-md border border-black/15 dark:border-white/20 bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-            {dateTagValue(item.published_at ?? item.publishedAt)}
-          </span>
-          <span
-            className={cn(
-              "inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium bg-transparent",
-              typeTagStyles[normalizedType] || "border-gray-400/40 text-gray-600 dark:border-gray-600 dark:text-gray-400"
-            )}
-          >
-            {normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1)}
-          </span>
-        </div>
       </div>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onToggleStar?.()
+        }}
+        className={cn(
+          "opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5 p-1 rounded hover:bg-black/10 dark:hover:bg-white/10",
+          starred ? "text-[#e7b53b]" : "text-muted-foreground"
+        )}
+        aria-label={starred ? "Unstar article" : "Star article"}
+      >
+        <Star size={12} fill={starred ? "currentColor" : "none"} />
+      </button>
 
       <button
         onClick={handleCopy}

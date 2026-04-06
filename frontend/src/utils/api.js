@@ -52,10 +52,17 @@ export async function getFeed(params = {}) {
   query.set("offset", String(params.offset ?? 0))
 
   if (params.search) query.set("search", params.search)
+  if (params.refresh) query.set("refresh", "true")
 
   const response = await request(`/api/feed?${query.toString()}`)
   const items = Array.isArray(response?.items) ? response.items : []
   return items.map(mapBackendItemToFeedItem)
+}
+
+export async function getArticleRead(url) {
+  const query = new URLSearchParams()
+  query.set("url", url)
+  return request(`/api/article/read?${query.toString()}`)
 }
 
 // ── Companies ─────────────────────────────────────────────────────────────────

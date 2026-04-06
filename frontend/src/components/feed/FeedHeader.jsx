@@ -7,7 +7,7 @@ import { useApp } from "@/context/AppContext"
 import { useSettingsContext } from "@/context/SettingsContext"
 
 export function FeedHeader({ companies, itemCount, onToggleSidebar, onOpenSettings }) {
-  const { activeCompanyId, activeItemId, typeFilter, setTypeFilter, search, setSearch } = useApp()
+  const { activeCompanyId, activeItemId, typeFilter, setTypeFilter, search, setSearch, feedMode } = useApp()
   const { settings, updateSettings } = useSettingsContext()
   const detailActive = !!activeItemId
 
@@ -15,6 +15,8 @@ export function FeedHeader({ companies, itemCount, onToggleSidebar, onOpenSettin
     activeCompanyId === 0
       ? { name: "All Companies" }
       : companies.find((c) => c.id === activeCompanyId)
+
+  const titleText = feedMode === "starred" ? "Starred Articles" : (activeCompany?.name ?? "All Companies")
 
   return (
     <>
@@ -40,7 +42,7 @@ export function FeedHeader({ companies, itemCount, onToggleSidebar, onOpenSettin
           </button>
           <div className="w-px h-4 bg-white/10" />
           <span className="text-[13px] font-medium text-foreground whitespace-nowrap">
-            {activeCompany?.name ?? "All Companies"}
+            {titleText}
           </span>
           <span className="text-[11px] text-muted-foreground">
             {itemCount} items
@@ -96,7 +98,7 @@ export function FeedHeader({ companies, itemCount, onToggleSidebar, onOpenSettin
 
           <div className="flex-1 flex items-center justify-center gap-1 px-2 min-w-0">
             <span className="text-[14px] font-medium text-foreground truncate">
-              {activeCompany?.name ?? "All Companies"}
+              {titleText}
             </span>
             <span className="text-[12px] text-muted-foreground flex-shrink-0">
               {itemCount}

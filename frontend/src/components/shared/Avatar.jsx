@@ -2,8 +2,9 @@ import { getInitials } from "@/utils/initials"
 import { colorFromName } from "@/utils/colors"
 import { cn } from "@/lib/utils"
 
-export function Avatar({ name = "", avatarUrl = null, size = "md", shape = "circle", className }) {
+export function Avatar({ name = "", avatarUrl = null, avatarColor = null, avatarTextColor = null, size = "md", shape = "circle", className }) {
   const { bg, text } = colorFromName(name)
+  const fallbackTextColor = text || "#FFFFFF"
 
   const sizes = {
     sm: "w-6 h-6 text-[9px]",
@@ -39,7 +40,7 @@ export function Avatar({ name = "", avatarUrl = null, size = "md", shape = "circ
         shapes[shape],
         className
       )}
-      style={{ backgroundColor: bg, color: text }}
+      style={{ backgroundColor: avatarColor || bg, color: avatarTextColor || fallbackTextColor }}
     >
       {getInitials(name)}
     </div>

@@ -1,12 +1,55 @@
 import { useApp } from "@/context/AppContext"
+import { useSettingsContext } from "@/context/SettingsContext"
+import { isToday } from "@/utils/dateGroup"
 import { CompanyItem } from "./CompanyItem"
 
 export function CompanyList({ companies, feedItems, collapsed }) {
-  const { activeCompanyId, setActiveCompanyId, setActiveItemId } = useApp()
+  const { activeCompanyId, setActiveCompanyId, setActiveItemId, setFeedMode, typeFilter, search } = useApp()
+  const { settings } = useSettingsContext()
+
+  function normalizeText(value) {
+    return String(value ?? "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  }
+
+  function itemMatchesCompany(item, company) {
+    if (!item || !company) return false
+
+    const itemCompanyId = String(item.company_id ?? "")
+    const companyId = String(company.id ?? "")
+    if (itemCompanyId && companyId && itemCompanyId === companyId) {
+      return true
+    }
+
+    const keyword = normalizeText(item.matched_keyword)
+    const companyName = normalizeText(company.name)
+    if (!keyword || !companyName) return false
+
+    return companyName.includes(keyword)
+  }
+
+  function itemMatchesSharedFilters(item) {
+    const matchType = typeFilter === "all" || item.type === typeFilter
+    const matchSearch =
+      !search ||
+      String(item.title ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      String(item.source ?? "").toLowerCase().includes(search.toLowerCase())
+    const matchScope = settings.scope === "all" || isToday(item.published_at)
+
+    return matchType && matchSearch && matchScope
+  }
 
   function getCount(companyId) {
-    if (companyId === 0) return feedItems.length
-    return feedItems.filter((i) => i.company_id === companyId).length
+    const visibleItems = feedItems.filter(itemMatchesSharedFilters)
+    if (companyId === 0) return visibleItems.length
+
+    const company = companies.find((c) => String(c.id ?? "") === String(companyId))
+    if (!company) return 0
+
+    return visibleItems.filter((item) => itemMatchesCompany(item, company)).length
   }
 
   const all = [{ id: 0, name: "All Companies" }, ...companies]
@@ -20,6 +63,7 @@ export function CompanyList({ companies, feedItems, collapsed }) {
           active={activeCompanyId === company.id}
           count={getCount(company.id)}
           onClick={() => {
+            setFeedMode("all")
             setActiveCompanyId(company.id)
             setActiveItemId(null)
           }}

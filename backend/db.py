@@ -23,6 +23,16 @@ def init_db() -> None:
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_feed_cache (
+                user_id TEXT PRIMARY KEY,
+                payload_json TEXT NOT NULL,
+                keywords_json TEXT NOT NULL,
+                cached_at TEXT NOT NULL
+            )
+            """
+        )
         conn.commit()
 
 
@@ -58,6 +68,7 @@ def save_watchlist(user_id: str, keywords: List[str]) -> List[str]:
         )
         conn.commit()
 
+    invalidate_feed_cache(user_id)
     return normalized
 
 
@@ -79,3 +90,56 @@ def get_watchlist(user_id: str) -> List[str]:
         return []
 
     return []
+
+
+def invalidate_feed_cache(user_id: str) -> None:
+    with _get_conn() as conn:
+        conn.execute("DELETE FROM user_feed_cache WHERE user_id = ?", (user_id,))
+        conn.commit()
+
+
+def save_feed_cache(user_id: str, keywords: List[str], payload: dict) -> None:
+    cached_at = datetime.now(timezone.utc).isoformat()
+    with _get_conn() as conn:
+        conn.execute(
+            """
+            INSERT INTO user_feed_cache (user_id, payload_json, keywords_json, cached_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                payload_json=excluded.payload_json,
+                keywords_json=excluded.keywords_json,
+                cached_at=excluded.cached_at
+            """,
+            (
+                user_id,
+                json.dumps(payload),
+                json.dumps(_normalize_keywords(keywords)),
+                cached_at,
+            ),
+        )
+        conn.commit()
+
+
+def get_feed_cache(user_id: str) -> dict | None:
+    with _get_conn() as conn:
+        row = conn.execute(
+            "SELECT payload_json, keywords_json, cached_at FROM user_feed_cache WHERE user_id = ?",
+            (user_id,),
+        ).fetchone()
+
+    if not row:
+        return None
+
+    payload_json, keywords_json, cached_at = row
+    try:
+        payload = json.loads(payload_json)
+        cached_keywords = json.loads(keywords_json)
+        cached_time = datetime.fromisoformat(cached_at)
+    except (json.JSONDecodeError, ValueError, TypeError):
+        return None
+
+    return {
+        "payload": payload,
+        "keywords": cached_keywords if isinstance(cached_keywords, list) else [],
+        "cached_at": cached_time,
+    }

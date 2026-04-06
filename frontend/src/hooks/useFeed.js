@@ -5,8 +5,9 @@ export function useFeed({ companyId, type, search, scope }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null)
 
-  const fetchFeed = useCallback(async () => {
+  const fetchFeed = useCallback(async ({ refresh = false } = {}) => {
     try {
       setLoading(true)
       setError(null)
@@ -15,8 +16,10 @@ export function useFeed({ companyId, type, search, scope }) {
         type,
         search,
         scope,
+        refresh,
       })
       setItems(data)
+      setLastUpdatedAt(new Date())
     } catch (err) {
       setError(err.message)
     } finally {
@@ -33,5 +36,7 @@ export function useFeed({ companyId, type, search, scope }) {
     loading,
     error,
     refetch: fetchFeed,
+    refreshFeed: () => fetchFeed({ refresh: true }),
+    lastUpdatedAt,
   }
 }
