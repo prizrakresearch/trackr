@@ -1,4 +1,5 @@
-const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:9696"
+const PROD_API_URL = "https://trackr-backend-tzuyvp52wa-uc.a.run.app"
+const BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? PROD_API_URL : "http://localhost:9696")
 const ENV_USER_ID = String(import.meta.env.VITE_USER_ID ?? "").trim()
 
 const DEFAULT_COMPANIES = [
