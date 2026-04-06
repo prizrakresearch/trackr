@@ -207,6 +207,22 @@ def _load_default_feed_sources() -> list[dict]:
     return _normalize_feed_sources(rows)
 
 
+def _merge_with_default_feed_sources(sources: list[dict]) -> list[dict]:
+    """Keep user-configured sources while appending any missing defaults by URL."""
+    existing = _normalize_feed_sources(sources)
+    defaults = _load_default_feed_sources()
+    known_urls = {str(item.get("url") or "").strip().lower() for item in existing}
+
+    merged = list(existing)
+    for source in defaults:
+        source_url = str(source.get("url") or "").strip().lower()
+        if source_url and source_url not in known_urls:
+            merged.append(source)
+            known_urls.add(source_url)
+
+    return merged
+
+
 def save_watchlist(user_id: str, keywords: List[str]) -> List[str]:
     normalized = _normalize_keywords(keywords)
     now = datetime.now(timezone.utc).isoformat()
@@ -249,7 +265,23 @@ def get_feed_sources(user_id: str) -> list[dict]:
     if not isinstance(sources, list):
         return _load_default_feed_sources()
 
-    return _normalize_feed_sources(sources)
+    normalized = _normalize_feed_sources(sources)
+    merged = _merge_with_default_feed_sources(normalized)
+
+    # Self-heal users created with older default lists by persisting missing sources.
+    if len(merged) > len(normalized):
+        now = datetime.now(timezone.utc).isoformat()
+        _user_doc(user_id).set(
+            {
+                "feed_sources": {
+                    "sources": merged,
+                    "updated_at": now,
+                }
+            },
+            merge=True,
+        )
+
+    return merged
 
 
 def save_feed_sources(user_id: str, sources: list[dict]) -> list[dict]:
