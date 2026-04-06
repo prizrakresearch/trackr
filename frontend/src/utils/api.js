@@ -6,7 +6,7 @@ const DEFAULT_COMPANIES = [
     name: "Apollo Tyres Limited",
     symbol: "APOLLOTYRE",
     avatarUrl: "https://logo.clearbit.com/apollotyres.com",
-    keywords: ["Apollo", "Apollo Tyres", "Apollo Tyre", "APOLLOTYRE", "tyre", "tyres"],
+    keywords: ["Apollo", "Apollo Tyres", "Apollo Tyre", "APOLLOTYRE"],
   },
   {
     name: "Indag Rubber Limited",
@@ -18,19 +18,19 @@ const DEFAULT_COMPANIES = [
     name: "MRF Limited",
     symbol: "MRF",
     avatarUrl: "https://logo.clearbit.com/mrftyres.com",
-    keywords: ["MRF", "MRF Tyres", "MRF Limited", "tyre", "tyres"],
+    keywords: ["MRF", "MRF Limited", "MRF Ltd", "MRF Tyres"],
   },
   {
     name: "CEAT Limited",
     symbol: "CEATLTD",
     avatarUrl: "https://logo.clearbit.com/ceat.com",
-    keywords: ["CEAT", "CEATLTD", "CEAT Limited", "CEAT Tyres", "tyre", "tyres"],
+    keywords: ["CEAT", "CEATLTD", "CEAT Limited", "CEAT Tyres"],
   },
   {
     name: "JK Tyre & Industries Limited",
     symbol: "JKTYRE",
     avatarUrl: "https://logo.clearbit.com/jktyre.com",
-    keywords: ["JK Tyre", "JKTYRE", "JK Tyre & Industries", "JK Tyres", "tyre", "tyres"],
+    keywords: ["JK Tyre", "JKTYRE", "JK Tyre & Industries", "JK Tyres"],
   },
   {
     name: "Midas Touch Investors Association Pvt Ltd",

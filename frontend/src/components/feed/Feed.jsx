@@ -18,11 +18,34 @@ export function Feed({ items, companies, loading }) {
   const { settings } = useSettingsContext()
   const selectedCompany = companies.find((company) => company.id === activeCompanyId)
 
+  function normalizeText(value) {
+    return String(value ?? "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  }
+
+  function getCompanyTokens(company) {
+    if (!company) return []
+
+    const extraKeywords = Array.isArray(company.keywords)
+      ? company.keywords
+      : String(company.keywords || "")
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+
+    return [company.name, company.symbol, ...extraKeywords]
+      .map((value) => normalizeText(value))
+      .filter(Boolean)
+  }
+
   function keywordMatchesSelectedCompany(item) {
     if (!selectedCompany || !item?.matched_keyword) return false
-    const companyName = String(selectedCompany.name ?? "").toLowerCase()
-    const keyword = String(item.matched_keyword).toLowerCase()
-    return companyName.includes(keyword)
+    const keyword = normalizeText(item.matched_keyword)
+    const tokens = getCompanyTokens(selectedCompany)
+    return tokens.includes(keyword)
   }
 
   // Filter
@@ -60,9 +83,9 @@ export function Feed({ items, companies, loading }) {
           companies.find((c) => c.id === item.company_id) ||
           companies.find((c) => {
             if (!item?.matched_keyword) return false
-            return String(c.name ?? "")
-              .toLowerCase()
-              .includes(String(item.matched_keyword).toLowerCase())
+            const keyword = normalizeText(item.matched_keyword)
+            const tokens = getCompanyTokens(c)
+            return tokens.includes(keyword)
           })
         return (
           <FeedItem

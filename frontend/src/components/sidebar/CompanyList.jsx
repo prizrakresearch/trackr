@@ -15,6 +15,21 @@ export function CompanyList({ companies, feedItems, collapsed }) {
       .trim()
   }
 
+  function getCompanyTokens(company) {
+    if (!company) return []
+
+    const extraKeywords = Array.isArray(company.keywords)
+      ? company.keywords
+      : String(company.keywords || "")
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+
+    return [company.name, company.symbol, ...extraKeywords]
+      .map((value) => normalizeText(value))
+      .filter(Boolean)
+  }
+
   function itemMatchesCompany(item, company) {
     if (!item || !company) return false
 
@@ -25,10 +40,10 @@ export function CompanyList({ companies, feedItems, collapsed }) {
     }
 
     const keyword = normalizeText(item.matched_keyword)
-    const companyName = normalizeText(company.name)
-    if (!keyword || !companyName) return false
+    if (!keyword) return false
 
-    return companyName.includes(keyword)
+    const tokens = getCompanyTokens(company)
+    return tokens.includes(keyword)
   }
 
   function itemMatchesSharedFilters(item) {
