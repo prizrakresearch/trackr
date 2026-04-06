@@ -264,6 +264,52 @@ function bootstrapCompaniesIfEmpty(companies = []) {
   return withCompanyIds(DEFAULT_COMPANIES)
 }
 
+function normalizeCompanyKey(name = "", symbol = "") {
+  const normalizedSymbol = String(symbol || "").trim().toLowerCase()
+  if (normalizedSymbol) return `symbol:${normalizedSymbol}`
+
+  const normalizedName = String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+  return `name:${normalizedName}`
+}
+
+function mergeCompaniesWithDefaults(companies = []) {
+  const current = withCompanyIds(Array.isArray(companies) ? companies : [])
+  const defaults = withCompanyIds(DEFAULT_COMPANIES)
+
+  const byKey = new Map()
+  for (const company of current) {
+    byKey.set(normalizeCompanyKey(company.name, company.symbol), company)
+  }
+
+  for (const preset of defaults) {
+    const key = normalizeCompanyKey(preset.name, preset.symbol)
+    const existing = byKey.get(key)
+
+    if (!existing) {
+      byKey.set(key, preset)
+      continue
+    }
+
+    const mergedKeywords = Array.from(
+      new Set([...(existing.keywords || []), ...(preset.keywords || [])].map((item) => String(item || "").trim()).filter(Boolean))
+    )
+
+    byKey.set(key, {
+      ...existing,
+      name: existing.name || preset.name,
+      symbol: existing.symbol || preset.symbol,
+      avatarUrl: existing.avatarUrl || preset.avatarUrl || null,
+      keywords: mergedKeywords,
+    })
+  }
+
+  return Array.from(byKey.values())
+}
+
 // ── Companies ─────────────────────────────────────────────────────────────────
 
 
@@ -277,7 +323,7 @@ export function getCompanies() {
     companies = [];
   }
 
-  companies = bootstrapCompaniesIfEmpty(companies)
+  companies = mergeCompaniesWithDefaults(bootstrapCompaniesIfEmpty(companies))
   localStorage.setItem(key, JSON.stringify(companies))
 
   // Keep backend keyword scan list aligned to company name + ticker.
