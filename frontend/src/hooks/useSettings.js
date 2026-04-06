@@ -6,10 +6,13 @@ const DEFAULT_SHORTCUTS = {
   refreshFeed: "r",
 }
 
+const SETTINGS_VERSION = 2
+
 const DEFAULTS = {
+  settingsVersion: SETTINGS_VERSION,
   density: "comfortable",
   sidebarOpen: true,
-  scope: "today",
+  scope: "all",
   openMode: "panel",
   theme: "system", // 'dark', 'light', or 'system'
   shortcuts: DEFAULT_SHORTCUTS,
@@ -32,9 +35,18 @@ function normalizeShortcuts(shortcuts = {}) {
 }
 
 function normalizeSettings(raw) {
-  const merged = { ...DEFAULTS, ...(raw || {}) }
+  const source = raw || {}
+  const isLegacy = source.settingsVersion !== SETTINGS_VERSION
+  const merged = { ...DEFAULTS, ...source }
+
+  if (isLegacy) {
+    // Migrate older installs from strict today-only scope to available/all scope.
+    merged.scope = "all"
+  }
+
   return {
     ...merged,
+    settingsVersion: SETTINGS_VERSION,
     shortcuts: normalizeShortcuts(merged.shortcuts),
   }
 }
