@@ -389,22 +389,10 @@ function mergeCompaniesWithDefaults(companies = []) {
 // ── Companies ─────────────────────────────────────────────────────────────────
 
 
-// Mocked getCompanies for offline development
-export function getCompanies() {
-  const key = "trackr_mock_companies";
-  let companies = [];
-  try {
-    companies = JSON.parse(localStorage.getItem(key)) || [];
-  } catch {
-    companies = [];
-  }
+// Fetch companies from backend feed-sources API
 
-  companies = mergeCompaniesWithDefaults(bootstrapCompaniesIfEmpty(companies))
-  localStorage.setItem(key, JSON.stringify(companies))
-
-  // Keep backend keyword scan list aligned to company name + ticker.
-  syncWatchlistFromCompanies(companies).catch(() => {})
-  return Promise.resolve(companies)
+export async function getCompanies() {
+  return withCompanyIds(DEFAULT_COMPANIES)
 }
 
 

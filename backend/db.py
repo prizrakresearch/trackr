@@ -1,5 +1,6 @@
 import json
 import os
+import sqlite3
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -7,14 +8,13 @@ from typing import List
 from urllib.parse import urlparse
 
 import csv
-from google.cloud import firestore
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "trackr.db"
 
 
 def _get_conn():
-    raise RuntimeError("Firestore backend in use; local SQL connection path is disabled")
+    return sqlite3.connect(DB_PATH)
 
 
 def init_db() -> None:
@@ -338,16 +338,17 @@ def get_feed_cache(user_id: str) -> dict | None:
     }
 
 
-from db_firestore import (  # type: ignore[assignment]
-    add_feed_source,
-    delete_feed_source,
-    get_feed_cache,
-    get_feed_sources,
-    get_watchlist,
-    init_db,
-    invalidate_feed_cache,
-    save_feed_cache,
-    save_feed_sources,
-    save_watchlist,
-    update_feed_source,
-)
+if os.getenv("TRACKR_DB_BACKEND", "sqlite").strip().lower() == "firestore":
+    from db_firestore import (  # type: ignore[assignment]
+        add_feed_source,
+        delete_feed_source,
+        get_feed_cache,
+        get_feed_sources,
+        get_watchlist,
+        init_db,
+        invalidate_feed_cache,
+        save_feed_cache,
+        save_feed_sources,
+        save_watchlist,
+        update_feed_source,
+    )
