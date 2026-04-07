@@ -16,7 +16,8 @@ import { ManageEntities } from "@/components/entities/ManageEntities"
 import { Onboarding } from "@/components/onboarding/Onboarding"
 
 console.log("[App] App.jsx loaded");
-function AppShell({ profile, companiesHook }) {
+function AppShell({ profile }) {
+  const companiesHook = useCompanies()
   const { companies, loading: companiesLoading, error: companiesError, watchlistSynced, add, remove } = companiesHook
   console.log("[AppShell] companiesHook:", companiesHook)
   const { settings, updateSettings } = useSettingsContext()
@@ -315,11 +316,11 @@ function AppShell({ profile, companiesHook }) {
   )
 }
 
-function AppWithProviders({ profile, companiesHook }) {
+function AppWithProviders({ profile }) {
   return (
     <SettingsProvider>
       <AppProvider>
-        <AppShell profile={profile} companiesHook={companiesHook} />
+        <AppShell profile={profile} />
       </AppProvider>
     </SettingsProvider>
   )
@@ -438,7 +439,6 @@ function OnboardingFlow({ onComplete, updateProfile }) {
 
 function App() {
   const { hasCompletedOnboarding, completeOnboarding, updateProfile, profile } = useProfile()
-  const companiesHook = useCompanies()
 
   useEffect(() => {
     ensurePersistedUserId()
@@ -448,7 +448,7 @@ function App() {
     return <OnboardingFlow onComplete={completeOnboarding} updateProfile={updateProfile} />
   }
 
-  return <AppWithProviders profile={profile} companiesHook={companiesHook} />
+  return <AppWithProviders profile={profile} />
 }
 
 export default App;
