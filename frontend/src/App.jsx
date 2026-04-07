@@ -325,136 +325,130 @@ function AppWithProviders({ profile, companiesHook }) {
   )
 }
 
-// ...existing code...
+const STEP_LABELS = ["Profile", "Companies", "Review"]
+const PROFILE_STORAGE_KEY = "trackr_profile"
+
+function OnboardingFlow({ onComplete, updateProfile }) {
+  const [onboardProfile, setOnboardProfile] = useState(() => {
+    try {
+      const stored = localStorage.getItem(PROFILE_STORAGE_KEY)
+      return stored
+        ? normalizeProfile(JSON.parse(stored))
+        : normalizeProfile({ name: "", avatarUrl: null, avatarColor: null, avatarTextColor: null })
+    } catch {
+      return normalizeProfile({ name: "", avatarUrl: null, avatarColor: null, avatarTextColor: null })
+    }
+  })
+  const [onboardCompanies, setOnboardCompanies] = useState([])
+  const [stepIndex, setStepIndex] = useState(() => {
+    const stored = localStorage.getItem("trackr_onboard_step")
+    return stored ? parseInt(stored, 10) || 0 : 0
+  })
+  const [adding, setAdding] = useState(false)
+  const [addError, setAddError] = useState("")
+  const [removingId, setRemovingId] = useState(null)
+  const [finishing, setFinishing] = useState(false)
+
+  useEffect(() => {
+    getCompanies().then(setOnboardCompanies).catch(() => setOnboardCompanies([]))
+  }, [])
+
+  function setOnboardProfileFields(updates) {
+    setOnboardProfile((prev) => {
+      const next = normalizeProfile({ ...prev, ...updates }, { trimText: false })
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next))
+      return next
+    })
+  }
+
+  function nextStep() {
+    setStepIndex((prev) => {
+      const next = Math.min(prev + 1, STEP_LABELS.length - 1)
+      localStorage.setItem("trackr_onboard_step", String(next))
+      return next
+    })
+  }
+
+  function previousStep() {
+    setStepIndex((prev) => {
+      const prevStep = Math.max(prev - 1, 0)
+      localStorage.setItem("trackr_onboard_step", String(prevStep))
+      return prevStep
+    })
+  }
+
+  async function handleAddCompany(payload) {
+    try {
+      setAddError("")
+      setAdding(true)
+      await addCompany(payload)
+      const companies = await getCompanies()
+      setOnboardCompanies(companies)
+    } catch (err) {
+      setAddError(err?.message ?? "Failed to add company")
+    } finally {
+      setAdding(false)
+    }
+  }
+
+  async function handleRemoveCompany(id) {
+    try {
+      setRemovingId(id)
+      await removeCompany(id)
+      const companies = await getCompanies()
+      setOnboardCompanies(companies)
+    } finally {
+      setRemovingId(null)
+    }
+  }
+
+  async function handleFinish() {
+    try {
+      setFinishing(true)
+      const finalProfile = normalizeProfile(onboardProfile)
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(finalProfile))
+      localStorage.removeItem("trackr_onboard_step")
+      updateProfile(finalProfile)
+      onComplete()
+    } finally {
+      setFinishing(false)
+    }
+  }
+
+  return (
+    <Onboarding
+      profile={onboardProfile}
+      updateProfile={setOnboardProfileFields}
+      companies={onboardCompanies}
+      addCompany={handleAddCompany}
+      removeCompany={handleRemoveCompany}
+      completeOnboarding={handleFinish}
+      stepIndex={stepIndex}
+      setStepIndex={setStepIndex}
+      nextStep={nextStep}
+      previousStep={previousStep}
+      adding={adding}
+      addError={addError}
+      removingId={removingId}
+      finishing={finishing}
+      stepLabels={STEP_LABELS}
+    />
+  )
+}
 
 function App() {
-  const { hasCompletedOnboarding, completeOnboarding: markOnboardingComplete, updateProfile, profile } = useProfile();
-  const companiesHook = useCompanies();
-  const PROFILE_STORAGE_KEY = "trackr_profile";
+  const { hasCompletedOnboarding, completeOnboarding, updateProfile, profile } = useProfile()
+  const companiesHook = useCompanies()
 
   useEffect(() => {
     ensurePersistedUserId()
   }, [])
 
   if (!hasCompletedOnboarding) {
-    // Onboarding state (local, not from hooks)
-    const [onboardProfile, setOnboardProfile] = useState(() => {
-      try {
-        const stored = localStorage.getItem("trackr_profile");
-        return stored
-          ? normalizeProfile(JSON.parse(stored))
-          : normalizeProfile({ name: "", avatarUrl: null, avatarColor: null, avatarTextColor: null });
-      } catch {
-        return normalizeProfile({ name: "", avatarUrl: null, avatarColor: null, avatarTextColor: null });
-      }
-    });
-    const [onboardCompanies, setOnboardCompanies] = useState([]);
-    const [stepIndex, setStepIndex] = useState(() => {
-      const stored = localStorage.getItem("trackr_onboard_step");
-      return stored ? parseInt(stored, 10) || 0 : 0;
-    });
-    const [adding, setAdding] = useState(false);
-    const [addError, setAddError] = useState("");
-    const [removingId, setRemovingId] = useState(null);
-    const [finishing, setFinishing] = useState(false);
-    const STEP_LABELS = ["Profile", "Companies", "Review"];
-
-    // On mount, load companies from API for onboarding
-    useEffect(() => {
-      getCompanies().then(setOnboardCompanies).catch(() => setOnboardCompanies([]));
-    }, []);
-
-    function setOnboardProfileFields(updates) {
-      setOnboardProfile((prev) => {
-        const next = normalizeProfile({ ...prev, ...updates }, { trimText: false });
-        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
-        return next;
-      });
-    }
-    function nextStep() {
-      setStepIndex((prev) => {
-        const next = Math.min(prev + 1, STEP_LABELS.length - 1);
-        localStorage.setItem("trackr_onboard_step", next);
-        return next;
-      });
-    }
-    function previousStep() {
-      setStepIndex((prev) => {
-        const prevStep = Math.max(prev - 1, 0);
-        localStorage.setItem("trackr_onboard_step", prevStep);
-        return prevStep;
-      });
-    }
-        // Clear onboarding step from localStorage when onboarding is finished
-        useEffect(() => {
-          if (hasCompletedOnboarding) {
-            localStorage.removeItem("trackr_onboard_step");
-          }
-        }, [hasCompletedOnboarding]);
-    async function handleAddCompany(payload) {
-      try {
-        setAddError("");
-        setAdding(true);
-        await addCompany(payload);
-        // Reload companies from localStorage via getCompanies to sync state
-        const companies = await getCompanies();
-        setOnboardCompanies(companies);
-      } catch (err) {
-        setAddError(err?.message ?? "Failed to add company");
-      } finally {
-        setAdding(false);
-      }
-    }
-    async function handleRemoveCompany(id) {
-      try {
-        setRemovingId(id);
-        await removeCompany(id);
-        // Reload companies from localStorage via getCompanies to sync state
-        const companies = await getCompanies();
-        setOnboardCompanies(companies);
-      } finally {
-        setRemovingId(null);
-      }
-    }
-    async function handleFinish() {
-      try {
-        setFinishing(true);
-        const finalProfile = normalizeProfile(onboardProfile);
-        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(finalProfile));
-        // Update the profile in useProfile hook
-        updateProfile(finalProfile);
-        // Mark onboarding complete
-        markOnboardingComplete();
-        // No reload: let React rerender and localStorage update
-      } finally {
-        setFinishing(false);
-      }
-    }
-
-    return (
-      <Onboarding
-        profile={onboardProfile}
-        updateProfile={setOnboardProfileFields}
-        companies={onboardCompanies}
-        addCompany={handleAddCompany}
-        removeCompany={handleRemoveCompany}
-        completeOnboarding={handleFinish}
-        stepIndex={stepIndex}
-        setStepIndex={setStepIndex}
-        nextStep={nextStep}
-        previousStep={previousStep}
-        adding={adding}
-        addError={addError}
-        removingId={removingId}
-        finishing={finishing}
-        stepLabels={STEP_LABELS}
-      />
-    );
+    return <OnboardingFlow onComplete={completeOnboarding} updateProfile={updateProfile} />
   }
 
-  // After onboarding, return main app shell
-  // Use the profile from useProfile, not onboardProfile
-  return <AppWithProviders profile={profile} companiesHook={companiesHook} />;
+  return <AppWithProviders profile={profile} companiesHook={companiesHook} />
 }
 
 export default App;
