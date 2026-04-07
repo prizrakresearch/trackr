@@ -21,7 +21,7 @@ function ManageEntitiesIcon() {
   )
 }
 
-export function SidebarFooter({ profile, onManageEntities, onOpenStarred = () => {}, collapsed }) {
+export function SidebarFooter({ profile, onManageEntities, onOpenStarred = () => {}, onReset, onExport, collapsed }) {
   function openSettings() {
     const event = new CustomEvent("open-settings");
     window.dispatchEvent(event);
@@ -79,7 +79,7 @@ export function SidebarFooter({ profile, onManageEntities, onOpenStarred = () =>
         )}
       </button>
 
-      <ProfileButton profile={profile} collapsed={collapsed} />
+      <ProfileButton profile={profile} collapsed={collapsed} onReset={onReset} onExport={onExport} />
     </div>
   )
 }

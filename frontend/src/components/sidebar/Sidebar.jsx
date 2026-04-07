@@ -23,7 +23,7 @@ function formatLastUpdated(dateInput) {
   return `Last update: ${day}-${month}-${year} ${hours}:${minutes}`
 }
 
-export function Sidebar({ open, companies, feedItems, profile, onManageEntities, onRefresh, onOpenStarred = () => {}, lastUpdatedAt, refreshLoading, fullWidth = false }) {
+export function Sidebar({ open, companies, feedItems, profile, onManageEntities, onRefresh, onOpenStarred = () => {}, onReset, onExport, lastUpdatedAt, refreshLoading, fullWidth = false }) {
   const { settings, systemTheme } = useSettingsContext();
   // Determine effective theme: if system, use systemTheme
   const effectiveTheme = settings.theme === "system" ? systemTheme : settings.theme;
@@ -102,6 +102,8 @@ export function Sidebar({ open, companies, feedItems, profile, onManageEntities,
         profile={profile}
         onManageEntities={onManageEntities}
         onOpenStarred={onOpenStarred}
+        onReset={onReset}
+        onExport={onExport}
         collapsed={collapsed}
       />
     </div>

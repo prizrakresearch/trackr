@@ -4,7 +4,7 @@ import { SettingsProvider, useSettingsContext } from "@/context/SettingsContext"
 import { useCompanies } from "@/hooks/useCompanies"
 import { useFeed } from "@/hooks/useFeed"
 import { useProfile, normalizeProfile } from "@/hooks/userProfile"
-import { ensurePersistedUserId, getCompanies, addCompany, removeCompany } from "@/utils/api"
+import { ensurePersistedUserId, getCompanies, addCompany, removeCompany, getFeedSources } from "@/utils/api"
 import { Sidebar } from "@/components/sidebar/Sidebar"
 import { FeedHeader } from "@/components/feed/FeedHeader"
 import { Feed } from "@/components/feed/Feed"
@@ -16,9 +16,33 @@ import { ManageEntities } from "@/components/entities/ManageEntities"
 import { Onboarding } from "@/components/onboarding/Onboarding"
 
 console.log("[App] App.jsx loaded");
-function AppShell({ profile }) {
+function AppShell({ profile, onReset }) {
   const companiesHook = useCompanies()
   const { companies, loading: companiesLoading, error: companiesError, watchlistSynced, add, remove } = companiesHook
+
+  async function handleExport() {
+    try {
+      const feedSources = await getFeedSources()
+      const payload = {
+        exported_at: new Date().toISOString(),
+        profile: {
+          name: profile?.name || "",
+          organization: profile?.organization || "",
+        },
+        companies: companies.map(({ name, symbol, keywords }) => ({ name, symbol, keywords })),
+        feed_sources: feedSources.map(({ url, label, category, enabled }) => ({ url, label, category, enabled })),
+      }
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `trackr-export-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error("[AppShell] Export failed:", err)
+    }
+  }
   console.log("[AppShell] companiesHook:", companiesHook)
   const { settings, updateSettings } = useSettingsContext()
   const {
@@ -183,6 +207,8 @@ function AppShell({ profile }) {
             console.log("[Sidebar] Refresh button clicked");
             refreshFeed();
           }}
+          onReset={onReset}
+          onExport={handleExport}
           lastUpdatedAt={lastUpdatedAt}
           refreshLoading={feedLoading}
         />
@@ -316,11 +342,11 @@ function AppShell({ profile }) {
   )
 }
 
-function AppWithProviders({ profile }) {
+function AppWithProviders({ profile, onReset }) {
   return (
     <SettingsProvider>
       <AppProvider>
-        <AppShell profile={profile} />
+        <AppShell profile={profile} onReset={onReset} />
       </AppProvider>
     </SettingsProvider>
   )
@@ -438,17 +464,29 @@ function OnboardingFlow({ onComplete, updateProfile }) {
 }
 
 function App() {
-  const { hasCompletedOnboarding, completeOnboarding, updateProfile, profile } = useProfile()
+  const { hasCompletedOnboarding, completeOnboarding, updateProfile, profile, resetOnboarding } = useProfile()
 
   useEffect(() => {
     ensurePersistedUserId()
   }, [])
 
+  function handleReset() {
+    // Clear all user data from localStorage
+    const keysToRemove = [
+      "trackr_user_id",
+      "trackr_mock_companies",
+      "trackr_starred_article_ids",
+      "trackr_onboard_step",
+    ]
+    keysToRemove.forEach((k) => localStorage.removeItem(k))
+    resetOnboarding() // clears trackr_profile + trackr_onboarded, flips state
+  }
+
   if (!hasCompletedOnboarding) {
     return <OnboardingFlow onComplete={completeOnboarding} updateProfile={updateProfile} />
   }
 
-  return <AppWithProviders profile={profile} />
+  return <AppWithProviders profile={profile} onReset={handleReset} />
 }
 
 export default App;
