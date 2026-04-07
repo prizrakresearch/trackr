@@ -15,13 +15,15 @@ body {
 
 
 :root {
-	--foreground: #18181b; /* dark text for light mode */
+	--foreground: #18181b;
 	--background: #f3f4f6;
+	--muted-foreground: #52525b; /* zinc-600 */
 }
 
 .dark {
-	--foreground: #f3f4f6; /* light text for dark mode */
+	--foreground: #f3f4f6;
 	--background: #18181b;
+	--muted-foreground: #a1a1aa; /* zinc-400 */
 }
 
 .text-foreground {
@@ -30,6 +32,28 @@ body {
 
 .bg-background {
 	background-color: var(--background) !important;
+}
+
+.text-muted-foreground {
+	color: var(--muted-foreground) !important;
+}
+
+/* opacity variants used across the codebase */
+.text-muted-foreground\/40 {
+	color: color-mix(in srgb, var(--muted-foreground) 40%, transparent) !important;
+}
+
+.text-muted-foreground\/75 {
+	color: color-mix(in srgb, var(--muted-foreground) 75%, transparent) !important;
+}
+
+/* placeholder utilities */
+.placeholder\:text-muted-foreground\/80::placeholder {
+	color: color-mix(in srgb, var(--muted-foreground) 80%, transparent);
+}
+
+.placeholder\:text-muted-foreground::placeholder {
+	color: var(--muted-foreground);
 }
 
 /* In light mode, white alpha borders become invisible on pale backgrounds. */
