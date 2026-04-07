@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils"
 
 export function ProfileButton({ profile, collapsed }) {
   const displayName = profile?.name?.trim() || profile?.username?.trim() || "Trackr User"
+  const organization = profile?.organization?.trim() || ""
 
   return (
     <button className={cn(
@@ -22,7 +23,9 @@ export function ProfileButton({ profile, collapsed }) {
           <span className="text-[12px] font-medium text-foreground truncate">
             {displayName}
           </span>
-          <span className="text-[10px] text-muted-foreground">Profile</span>
+          <span className="text-[10px] text-muted-foreground truncate">
+            {organization || "Profile"}
+          </span>
         </div>
       )}
     </button>
