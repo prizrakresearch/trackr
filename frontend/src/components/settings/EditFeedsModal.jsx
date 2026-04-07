@@ -312,7 +312,7 @@ export function EditFeedsModal({ open, onClose }) {
           placeholder="Search feeds"
           className={cn(
             "w-full h-9 rounded-md border px-3 text-[12px] text-foreground outline-none focus:border-[#378ADD]",
-            isLightTheme ? "border-slate-300 bg-white" : "border-white/10 bg-white/5"
+            isLightTheme ? "border-slate-300 bg-white" : "border-white/20 bg-white/[0.05]"
           )}
         />
 
@@ -332,7 +332,7 @@ export function EditFeedsModal({ open, onClose }) {
               onChange={(e) => setBulkCategory(e.target.value)}
               className={cn(
                 "h-9 rounded-md border px-2 text-[12px] text-foreground outline-none focus:border-[#378ADD]",
-                isLightTheme ? "border-slate-300 bg-white" : "border-white/10 bg-white/5"
+                isLightTheme ? "border-slate-300 bg-white" : "border-white/20 bg-white/[0.05]"
               )}
             >
               {CATEGORY_OPTIONS.map((option) => (
@@ -368,7 +368,7 @@ export function EditFeedsModal({ open, onClose }) {
         <div
           className={cn(
             "rounded-lg border p-2 max-h-[62vh] overflow-y-auto space-y-2",
-            isLightTheme ? "border-slate-200 bg-white" : "border-white/10 bg-[#141518]"
+            isLightTheme ? "border-slate-200 bg-white" : "border-white/20 bg-white/[0.03]"
           )}
         >
           {feedsLoading ? <p className="text-[11px] text-muted-foreground px-1">Loading feeds...</p> : null}
@@ -390,7 +390,7 @@ export function EditFeedsModal({ open, onClose }) {
                 key={source.id}
                 className={cn(
                   "rounded-md border p-2",
-                  isLightTheme ? "border-slate-200" : "border-white/10"
+                  isLightTheme ? "border-slate-200" : "border-white/20"
                 )}
               >
                 <div className="grid grid-cols-1 lg:grid-cols-[76px_minmax(0,1fr)_190px_92px_120px] gap-2 items-center">
@@ -410,7 +410,7 @@ export function EditFeedsModal({ open, onClose }) {
                       readOnly={!isEditing}
                       className={cn(
                         "w-full h-9 rounded-md border px-2 text-[11px] text-foreground outline-none focus:border-[#378ADD]",
-                        isLightTheme ? "border-slate-300 bg-white" : "border-white/10 bg-white/5",
+                        isLightTheme ? "border-slate-300 bg-white" : "border-white/20 bg-white/[0.05]",
                         !isEditing && "opacity-85"
                       )}
                     />
@@ -429,7 +429,7 @@ export function EditFeedsModal({ open, onClose }) {
                     disabled={busy}
                     className={cn(
                       "h-9 rounded-md border px-2 text-[11px] text-foreground outline-none focus:border-[#378ADD] disabled:opacity-50 disabled:cursor-not-allowed",
-                      isLightTheme ? "border-slate-300 bg-white" : "border-white/10 bg-white/5"
+                      isLightTheme ? "border-slate-300 bg-white" : "border-white/20 bg-white/[0.05]"
                     )}
                   >
                     {CATEGORY_OPTIONS.map((option) => (
@@ -502,7 +502,7 @@ export function EditFeedsModal({ open, onClose }) {
             placeholder="https://example.com/rss.xml"
             className={cn(
               "h-9 rounded-md border px-3 text-[12px] text-foreground outline-none focus:border-[#378ADD]",
-              isLightTheme ? "border-slate-300 bg-white" : "border-white/10 bg-white/5"
+              isLightTheme ? "border-slate-300 bg-white" : "border-white/20 bg-white/[0.05]"
             )}
           />
           <select
@@ -510,7 +510,7 @@ export function EditFeedsModal({ open, onClose }) {
             onChange={(e) => setNewFeedCategory(e.target.value)}
             className={cn(
               "h-9 rounded-md border px-2 text-[12px] text-foreground outline-none focus:border-[#378ADD]",
-              isLightTheme ? "border-slate-300 bg-white" : "border-white/10 bg-white/5"
+              isLightTheme ? "border-slate-300 bg-white" : "border-white/20 bg-white/[0.05]"
             )}
           >
             {CATEGORY_OPTIONS.map((option) => (

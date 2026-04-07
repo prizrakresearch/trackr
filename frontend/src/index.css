@@ -41,6 +41,13 @@ body {
 	border-color: rgba(24, 24, 27, 0.12) !important;
 }
 
+/* Native checkbox / radio dark-mode fix */
+.dark input[type="checkbox"],
+.dark input[type="radio"] {
+  accent-color: #378ADD;
+  color-scheme: dark;
+}
+
 /* Improve hover contrast in light mode for dark-theme utility classes. */
 :root:not(.dark) [class*="hover:bg-white/5"]:hover {
 	background-color: rgba(24, 24, 27, 0.06) !important;

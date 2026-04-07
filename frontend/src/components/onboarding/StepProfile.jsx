@@ -166,7 +166,7 @@ export function StepProfile({ profile, onChange, onNext }) {
             value={name}
             onChange={(e) => update("name", e.target.value)}
             placeholder="Jane Analyst"
-            className="w-full h-10 rounded-md border border-black/10 dark:border-white/10 bg-white dark:bg-[#141518] px-3 text-[13px] text-zinc-900 dark:text-foreground placeholder:text-zinc-500 dark:placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
+            className="w-full h-10 rounded-md border border-black/10 dark:border-white/20 bg-white dark:bg-white/[0.05] px-3 text-[13px] text-zinc-900 dark:text-foreground placeholder:text-zinc-500 dark:placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
           />
         </div>
 
@@ -182,13 +182,13 @@ export function StepProfile({ profile, onChange, onNext }) {
               value={organization}
               onChange={(e) => update("organization", e.target.value)}
               placeholder="Organization (optional)"
-              className="w-full h-10 rounded-md border border-black/10 dark:border-white/10 bg-white dark:bg-[#141518] px-3 text-[13px] text-zinc-900 dark:text-foreground placeholder:text-zinc-500 dark:placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
+              className="w-full h-10 rounded-md border border-black/10 dark:border-white/20 bg-white dark:bg-white/[0.05] px-3 text-[13px] text-zinc-900 dark:text-foreground placeholder:text-zinc-500 dark:placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
             />
           </div>
 
           <div className="flex items-center gap-2 opacity-60">
             {!hasPastedUrl && (
-              <label className="h-10 inline-flex items-center gap-1.5 rounded-md border border-black/10 dark:border-white/10 bg-white dark:bg-[#141518] px-3 text-[12px] text-zinc-800 dark:text-zinc-200 cursor-pointer hover:border-[#378ADD] transition-colors">
+              <label className="h-10 inline-flex items-center gap-1.5 rounded-md border border-black/10 dark:border-white/20 bg-white dark:bg-white/[0.05] px-3 text-[12px] text-zinc-800 dark:text-zinc-200 cursor-pointer hover:border-[#378ADD] transition-colors">
                 <Upload size={12} />
                 Upload
                 <input
@@ -225,7 +225,7 @@ export function StepProfile({ profile, onChange, onNext }) {
                   update("avatarUrl", e.target.value)
                 }}
                 placeholder="https://example.com/avatar.png"
-                className="flex-1 h-10 rounded-md border border-black/10 dark:border-white/10 bg-white dark:bg-[#141518] px-3 text-[13px] text-zinc-900 dark:text-foreground placeholder:text-zinc-500 dark:placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
+                className="flex-1 h-10 rounded-md border border-black/10 dark:border-white/20 bg-white dark:bg-white/[0.05] px-3 text-[13px] text-zinc-900 dark:text-foreground placeholder:text-zinc-500 dark:placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
               />
             )}
 

@@ -39,25 +39,25 @@ export function AddEntityRow({ onAdd, adding = false, error = "" }) {
   const disabled = adding || !form.name.trim()
 
   return (
-    <div className="rounded-lg border border-white/10 bg-background p-3 space-y-2.5">
+    <div className="rounded-lg border border-white/20 bg-background p-3 space-y-2.5">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <input
           value={form.name}
           onChange={(e) => updateField("name", e.target.value)}
           placeholder="Company name"
-          className="h-9 rounded-md border border-white/10 bg-white/[0.02] px-3 text-[12px] text-foreground placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
+          className="h-9 rounded-md border border-white/20 bg-white/[0.05] px-3 text-[12px] text-foreground placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
         />
         <input
           value={form.symbol}
           onChange={(e) => updateField("symbol", e.target.value.toUpperCase())}
           placeholder="Ticker"
-          className="h-9 rounded-md border border-white/10 bg-white/[0.02] px-3 text-[12px] text-foreground placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
+          className="h-9 rounded-md border border-white/20 bg-white/[0.05] px-3 text-[12px] text-foreground placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
         />
         <input
           value={form.keywords}
           onChange={(e) => updateField("keywords", e.target.value)}
           placeholder="Search keywords (comma separated)"
-          className="h-9 rounded-md border border-white/10 bg-white/[0.02] px-3 text-[12px] text-foreground placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
+          className="h-9 rounded-md border border-white/20 bg-white/[0.05] px-3 text-[12px] text-foreground placeholder:text-muted-foreground/80 outline-none focus:border-[#378ADD]"
         />
       </div>
 
