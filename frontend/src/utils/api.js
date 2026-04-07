@@ -190,7 +190,7 @@ export function ensurePersistedUserId() {
 export async function getFeed(params = {}) {
   const query = new URLSearchParams()
   query.set("user_id", params.user_id ?? getPersistedUserId())
-  query.set("limit", String(params.limit ?? 100))
+  query.set("limit", String(params.limit ?? 500))
   query.set("offset", String(params.offset ?? 0))
 
   if (params.search) query.set("search", params.search)
