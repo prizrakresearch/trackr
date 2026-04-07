@@ -401,17 +401,17 @@ export async function getCompanies() {
 // Mocked addCompany for offline development
 export async function addCompany(company) {
   const key = "trackr_mock_companies";
-  let companies = [];
+  let localCompanies = [];
   try {
-    companies = JSON.parse(localStorage.getItem(key)) || [];
+    localCompanies = JSON.parse(localStorage.getItem(key)) || [];
   } catch {}
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
   const created = { ...company, id };
-  companies.push(created);
-  localStorage.setItem(key, JSON.stringify(companies));
+  localCompanies.push(created);
+  localStorage.setItem(key, JSON.stringify(localCompanies));
 
   try {
-    await syncWatchlistFromCompanies(companies)
+    await syncWatchlistFromCompanies([...DEFAULT_COMPANIES, ...localCompanies])
   } catch {
     // Keep local add successful even if backend sync is temporarily unavailable.
   }
@@ -423,15 +423,15 @@ export async function addCompany(company) {
 // Mocked removeCompany for offline development
 export async function removeCompany(id) {
   const key = "trackr_mock_companies";
-  let companies = [];
+  let localCompanies = [];
   try {
-    companies = JSON.parse(localStorage.getItem(key)) || [];
+    localCompanies = JSON.parse(localStorage.getItem(key)) || [];
   } catch {}
-  companies = companies.filter((c) => c.id !== id);
-  localStorage.setItem(key, JSON.stringify(companies));
+  localCompanies = localCompanies.filter((c) => c.id !== id);
+  localStorage.setItem(key, JSON.stringify(localCompanies));
 
   try {
-    await syncWatchlistFromCompanies(companies)
+    await syncWatchlistFromCompanies([...DEFAULT_COMPANIES, ...localCompanies])
   } catch {
     // Keep local remove successful even if backend sync is temporarily unavailable.
   }

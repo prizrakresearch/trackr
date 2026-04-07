@@ -17,7 +17,7 @@ import { Onboarding } from "@/components/onboarding/Onboarding"
 
 console.log("[App] App.jsx loaded");
 function AppShell({ profile, companiesHook }) {
-  const { companies, loading: companiesLoading, error: companiesError, add, remove } = companiesHook
+  const { companies, loading: companiesLoading, error: companiesError, watchlistSynced, add, remove } = companiesHook
   console.log("[AppShell] companiesHook:", companiesHook)
   const { settings, updateSettings } = useSettingsContext()
   const {
@@ -58,6 +58,13 @@ function AppShell({ profile, companiesHook }) {
     scope: settings.scope,
   })
   console.log("[AppShell] useFeed items:", items)
+
+  // After the watchlist is synced with fresh keywords, refresh the feed so it
+  // picks up any changes (e.g. recovering from a partial/stale watchlist).
+  useEffect(() => {
+    if (!watchlistSynced) return
+    refreshFeed()
+  }, [watchlistSynced]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (settings.openMode !== "new-tab" || !activeItemId) return
