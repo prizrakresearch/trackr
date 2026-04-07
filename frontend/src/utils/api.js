@@ -103,84 +103,45 @@ function mapBackendItemToFeedItem(item = {}) {
 }
 
 function getPersistedUserId() {
-  function normalizeCandidate(value) {
-    const cleaned = String(value || "").trim()
-    if (!cleaned) return ""
-    return cleaned.toLowerCase().replace(/\s+/g, "_")
+  function slugify(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "_")
+      .replace(/[^a-z0-9_]/g, "")
+      .slice(0, 64)
   }
 
-  function getTrackrProfile() {
+  function getProfileName() {
     try {
       const raw = localStorage.getItem("trackr_profile")
-      if (!raw) return null
+      if (!raw) return ""
       const profile = JSON.parse(raw)
-      if (!profile || typeof profile !== "object") return null
-      return profile
-    } catch {
-      return null
-    }
-  }
-
-  function fromTrackrProfile(profile) {
-    try {
-      if (!profile || typeof profile !== "object") return ""
-
-      const directId =
-        profile.user_id ??
-        profile.userId ??
-        profile.id ??
-        profile.sub ??
-        profile.uid
-      const directCandidate = normalizeCandidate(directId)
-      if (directCandidate) return directCandidate
-
-      const emailCandidate = normalizeCandidate(profile.email)
-      if (emailCandidate) return emailCandidate
-
-      return ""
+      return slugify(profile?.name || "")
     } catch {
       return ""
     }
-  }
-
-  function generateAnonymousUserId() {
-    const rawId =
-      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-        ? crypto.randomUUID()
-        : `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
-
-    const compact = String(rawId).toLowerCase().replace(/[^a-z0-9]/g, "")
-    return `anon_${compact}`
   }
 
   try {
-    const profile = getTrackrProfile()
-    const profileUserId = fromTrackrProfile(profile)
-    const value = localStorage.getItem("trackr_user_id")
+    if (ENV_USER_ID) return slugify(ENV_USER_ID) || "user"
 
-    if (value && value.trim()) {
-      return value.trim()
+    const name = getProfileName()
+    if (name) {
+      localStorage.setItem("trackr_user_id", name)
+      return name
     }
 
-    if (profileUserId) {
-      localStorage.setItem("trackr_user_id", profileUserId)
-      return profileUserId
-    }
+    // No profile name yet (pre-onboarding) — use a stable placeholder
+    const stored = localStorage.getItem("trackr_user_id")
+    if (stored && stored.trim()) return stored.trim()
 
-    if (ENV_USER_ID) {
-      localStorage.setItem("trackr_user_id", ENV_USER_ID)
-      return ENV_USER_ID
-    }
-
-    const generated = generateAnonymousUserId()
-    localStorage.setItem("trackr_user_id", generated)
-    return generated
+    const placeholder = "user"
+    localStorage.setItem("trackr_user_id", placeholder)
+    return placeholder
   } catch {
-    // Ignore storage read errors and fall back to an environment-defined id when available.
+    return ENV_USER_ID ? slugify(ENV_USER_ID) || "user" : "user"
   }
-
-  if (ENV_USER_ID) return ENV_USER_ID
-  return "anon_fallback"
 }
 
 export function ensurePersistedUserId() {
