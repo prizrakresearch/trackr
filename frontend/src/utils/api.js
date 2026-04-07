@@ -6,31 +6,31 @@ const DEFAULT_COMPANIES = [
   {
     name: "Apollo Tyres Limited",
     symbol: "APOLLOTYRE",
-    avatarUrl: "https://logo.clearbit.com/apollotyres.com",
+    avatarUrl: null,
     keywords: ["Apollo", "Apollo Tyres", "Apollo Tyre", "APOLLOTYRE"],
   },
   {
     name: "Indag Rubber Limited",
     symbol: "INDAG",
-    avatarUrl: "https://logo.clearbit.com/indagrubber.com",
+    avatarUrl: null,
     keywords: ["Indag", "Indag Rubber", "INDAG", "retread", "retreading", "precured tread"],
   },
   {
     name: "MRF Limited",
     symbol: "MRF",
-    avatarUrl: "https://logo.clearbit.com/mrftyres.com",
+    avatarUrl: null,
     keywords: ["MRF", "MRF Limited", "MRF Ltd", "MRF Tyres"],
   },
   {
     name: "CEAT Limited",
     symbol: "CEATLTD",
-    avatarUrl: "https://logo.clearbit.com/ceat.com",
+    avatarUrl: null,
     keywords: ["CEAT", "CEATLTD", "CEAT Limited", "CEAT Tyres"],
   },
   {
     name: "JK Tyre & Industries Limited",
     symbol: "JKTYRE",
-    avatarUrl: "https://logo.clearbit.com/jktyre.com",
+    avatarUrl: null,
     keywords: ["JK Tyre", "JKTYRE", "JK Tyre & Industries", "JK Tyres"],
   },
   {

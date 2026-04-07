@@ -1,8 +1,10 @@
+import { useState } from "react"
 import { getInitials } from "@/utils/initials"
 import { colorFromName } from "@/utils/colors"
 import { cn } from "@/lib/utils"
 
 export function Avatar({ name = "", avatarUrl = null, avatarColor = null, avatarTextColor = null, size = "md", shape = "circle", className }) {
+  const [imgFailed, setImgFailed] = useState(false)
   const { bg, text } = colorFromName(name)
   const fallbackTextColor = text || "#FFFFFF"
 
@@ -17,11 +19,12 @@ export function Avatar({ name = "", avatarUrl = null, avatarColor = null, avatar
     square: "rounded-md",
   }
 
-  if (avatarUrl) {
+  if (avatarUrl && !imgFailed) {
     return (
       <img
         src={avatarUrl}
         alt={name}
+        onError={() => setImgFailed(true)}
         className={cn(
           "object-cover flex-shrink-0",
           sizes[size],
