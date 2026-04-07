@@ -19,8 +19,17 @@ export function useFeed({ companyId, type, search, scope }) {
         scope,
         refresh,
       })
-      console.log("[useFeed] fetchFeed items:", data)
-      setItems(data)
+      // Sort by date descending so articles from all companies are interleaved
+      const sorted = [...data].sort((a, b) => {
+        const aTime = new Date(a.published_at).getTime()
+        const bTime = new Date(b.published_at).getTime()
+        if (isNaN(aTime) && isNaN(bTime)) return 0
+        if (isNaN(aTime)) return 1
+        if (isNaN(bTime)) return -1
+        return bTime - aTime
+      })
+      console.log("[useFeed] fetchFeed items:", sorted)
+      setItems(sorted)
       setLastUpdatedAt(new Date())
     } catch (err) {
       setError(err.message)
