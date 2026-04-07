@@ -1,4 +1,4 @@
-const PROD_API_URL = "https://trackr-backend-tzuyvp52wa-uc.a.run.app"
+const PROD_API_URL = "https://trackr-backend-479528257288.us-central1.run.app"
 const BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? PROD_API_URL : "http://localhost:9696")
 const ENV_USER_ID = String(import.meta.env.VITE_USER_ID ?? "").trim()
 
@@ -197,7 +197,9 @@ export async function getFeed(params = {}) {
   if (params.refresh) query.set("refresh", "true")
 
   const response = await request(`/api/feed?${query.toString()}`)
+  console.log("[api] getFeed raw response:", response)
   const items = Array.isArray(response?.items) ? response.items : []
+  console.log("[api] getFeed mapped items:", items)
   return items.map(mapBackendItemToFeedItem)
 }
 

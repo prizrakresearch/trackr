@@ -10,10 +10,13 @@ export function useCompanies() {
     try {
       setLoading(true)
       setError(null)
+      console.log("[useCompanies] Fetching companies...")
       const data = await getCompanies()
+      console.log("[useCompanies] Companies fetched:", data)
       setCompanies(data)
     } catch (err) {
       setError(err.message)
+      console.error("[useCompanies] Error fetching companies:", err)
     } finally {
       setLoading(false)
     }

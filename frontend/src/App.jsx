@@ -15,8 +15,10 @@ import { Settings } from "@/components/settings/Settings"
 import { ManageEntities } from "@/components/entities/ManageEntities"
 import { Onboarding } from "@/components/onboarding/Onboarding"
 
+console.log("[App] App.jsx loaded");
 function AppShell({ profile, companiesHook }) {
   const { companies, loading: companiesLoading, error: companiesError, add, remove } = companiesHook
+  console.log("[AppShell] companiesHook:", companiesHook)
   const { settings, updateSettings } = useSettingsContext()
   const {
     activeCompanyId,
@@ -55,6 +57,7 @@ function AppShell({ profile, companiesHook }) {
     search,
     scope: settings.scope,
   })
+  console.log("[AppShell] useFeed items:", items)
 
   useEffect(() => {
     if (settings.openMode !== "new-tab" || !activeItemId) return
@@ -168,7 +171,10 @@ function AppShell({ profile, companiesHook }) {
             setActiveCompanyId(0)
             clearActiveItem()
           }}
-          onRefresh={refreshFeed}
+          onRefresh={() => {
+            console.log("[Sidebar] Refresh button clicked");
+            refreshFeed();
+          }}
           lastUpdatedAt={lastUpdatedAt}
           refreshLoading={feedLoading}
         />

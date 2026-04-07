@@ -154,8 +154,11 @@ def read_feed(
 ):
     uid = user_id.strip()
     keywords = get_watchlist(uid)
+    print(f"[API] /api/feed user_id={uid} keywords={keywords}", flush=True)
     sources = get_feed_sources(uid)
+    print(f"[API] /api/feed sources count={len(sources)} example={sources[:2]}", flush=True)
     feed_urls = [source for source in sources if source.get("enabled", True)]
+    print(f"[API] /api/feed feed_urls count={len(feed_urls)} example={feed_urls[:2]}", flush=True)
 
     if not keywords:
         save_feed_cache(

@@ -11,6 +11,7 @@ export function useFeed({ companyId, type, search, scope }) {
     try {
       setLoading(true)
       setError(null)
+      console.log("[useFeed] fetchFeed params:", { companyId, type, search, scope, refresh })
       const data = await getFeed({
         company_id: companyId,
         type,
@@ -18,10 +19,12 @@ export function useFeed({ companyId, type, search, scope }) {
         scope,
         refresh,
       })
+      console.log("[useFeed] fetchFeed items:", data)
       setItems(data)
       setLastUpdatedAt(new Date())
     } catch (err) {
       setError(err.message)
+      console.error("[useFeed] fetchFeed error:", err)
     } finally {
       setLoading(false)
     }
